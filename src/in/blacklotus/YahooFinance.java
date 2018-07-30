@@ -47,16 +47,18 @@ public class YahooFinance {
 			return;
 		}
 
-		System.out.println("------------------------------------------------------------------------------------------");
-		
-		for(String stock: stocks) {
-			
+		System.out
+				.println("------------------------------------------------------------------------------------------");
+
+		for (String stock : stocks) {
+
 			System.out.print(stock + ",");
 		}
-		
+
 		System.out.println();
-		
-		System.out.println("------------------------------------------------------------------------------------------");
+
+		System.out
+				.println("------------------------------------------------------------------------------------------");
 
 		List<Stock> stocksList = new ArrayList<>();
 
@@ -66,12 +68,15 @@ public class YahooFinance {
 		}
 
 		writeToFile(stocksList);
-		
-		System.out.println("------------------------------------------------------------------------------------------");
 
-		System.out.println("----------------------------- Finished creating CSV file ---------------------------------");
-		
-		System.out.println("------------------------------------------------------------------------------------------");
+		System.out
+				.println("------------------------------------------------------------------------------------------");
+
+		System.out
+				.println("----------------------------- Finished creating CSV file ---------------------------------");
+
+		System.out
+				.println("------------------------------------------------------------------------------------------");
 	}
 
 	private static Stock getStockDetails(String stockName) {
@@ -79,9 +84,9 @@ public class YahooFinance {
 		Stock stock = new Stock();
 
 		double[] closeValues;
-		
+
 		double[] lowValues;
-		
+
 		double[] highValues;
 
 		long[] timestamps;
@@ -103,9 +108,9 @@ public class YahooFinance {
 			timestamps = yahooResponse.getChart().getResult()[0].getTimestamp();
 
 			closeValues = yahooResponse.getChart().getResult()[0].getIndicators().getQuote()[0].getClose();
-			
+
 			lowValues = yahooResponse.getChart().getResult()[0].getIndicators().getQuote()[0].getLow();
-			
+
 			highValues = yahooResponse.getChart().getResult()[0].getIndicators().getQuote()[0].getHigh();
 
 			stock.setCurrency(metaData.getCurrency());
@@ -162,7 +167,7 @@ public class YahooFinance {
 		}
 
 		if (input != null) {
-			
+
 			return input.split(",");
 
 		} else {
@@ -185,8 +190,7 @@ public class YahooFinance {
 
 			PrintWriter writer = new PrintWriter(new FileWriter(OUTPUT_FILE_NAME));
 
-			writer.println(
-					"NAME,SYMBOL,CURRENCY,CLOSING-VALUE,HIGH-VALUE,HIGH-PERCENT,HIGH-DATE,LOW-VALUE,LOW-PERCENT,LOW-DATE");
+			writer.println("SYMBOL,NOW,LOW20,%(+/-) FROM LOW20,LOW-DATE,HIGH20,%(+/-) FROM HIGH20,HIGH-DATE");
 
 			for (Stock stock : stocks) {
 

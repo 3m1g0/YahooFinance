@@ -29,17 +29,17 @@ public class Stock {
 
 	public Stock() {
 
-		String pattern = "dd/MM/yyyy";
+		String pattern = "MM/dd/yyyy";
 
 		sdf = new SimpleDateFormat(pattern);
 	}
 
 	public void calculateHighPercenttage() {
-		this.highPercent = (this.high - this.close) / this.high * 100;
+		this.highPercent = (this.close - this.high) / this.high * 100;
 	}
 
 	public void calculateLowPercenttage() {
-		this.lowPercent = (this.low - this.close) / this.low * 100;
+		this.lowPercent = (this.close - this.low) / this.low * 100;
 	}
 
 	public String getCurrency() {
@@ -130,9 +130,9 @@ public class Stock {
 	@Override
 	public String toString() {
 
-		return this.name + "," + this.symbol + "," + this.currency + "," + round(this.close) + "," + round(this.high)
-				+ "," + round(this.highPercent) + "," + sdf.format(this.highDate) + "," + round(this.low) + ","
-				+ round(this.lowPercent) + "," + sdf.format(this.lowDate);
+		return this.symbol + "," + round(this.close) + "," + round(this.low) + "," + round(this.lowPercent) + ","
+				+ sdf.format(this.lowDate) + "," + round(this.high) + "," + round(this.highPercent) + ","
+				+ sdf.format(this.highDate);
 	}
 
 }
