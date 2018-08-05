@@ -11,11 +11,13 @@ public class Stock {
 
 	private String symbol;
 
-	private double close;
+	private double now;
 
 	private double low;
 
 	private double high;
+
+	private double nowPercent;
 
 	private double lowPercent;
 
@@ -24,6 +26,10 @@ public class Stock {
 	private Date highDate;
 
 	private Date lowDate;
+
+	private double differ;
+
+	private double move;
 
 	private SimpleDateFormat sdf;
 
@@ -35,11 +41,19 @@ public class Stock {
 	}
 
 	public void calculateHighPercenttage() {
-		this.highPercent = (this.close - this.high) / this.high * 100;
+		this.highPercent = (this.now - this.high) / this.high * 100;
 	}
 
 	public void calculateLowPercenttage() {
-		this.lowPercent = (this.close - this.low) / this.low * 100;
+		this.lowPercent = (this.now - this.low) / this.low * 100;
+	}
+
+	public void calculateDiffer() {
+		this.differ = (this.high - this.now) / this.high * 100;
+	}
+
+	public void calculateMove() {
+		this.move = (this.high - this.low) / this.now * 100;
 	}
 
 	public String getCurrency() {
@@ -66,12 +80,12 @@ public class Stock {
 		this.symbol = symbol;
 	}
 
-	public double getClose() {
-		return close;
+	public double getNow() {
+		return now;
 	}
 
-	public void setClose(double close) {
-		this.close = close;
+	public void setNow(double close) {
+		this.now = close;
 	}
 
 	public double getLow() {
@@ -88,6 +102,14 @@ public class Stock {
 
 	public void setHigh(double high) {
 		this.high = high;
+	}
+
+	public double getNowPercent() {
+		return nowPercent;
+	}
+
+	public void setNowPercent(double nowPercent) {
+		this.nowPercent = nowPercent;
 	}
 
 	public double getLowPercent() {
@@ -122,17 +144,43 @@ public class Stock {
 		this.lowDate = lowDate;
 	}
 
-	private double round(double value) {
-
-		return Math.round(value * 100.0) / 100.0;
+	public double getDiffer() {
+		return differ;
 	}
 
+	public void setDiffer(double differ) {
+		this.differ = differ;
+	}
+
+	public double getMove() {
+		return move;
+	}
+
+	public void setMove(double move) {
+		this.move = move;
+	}
+
+	private double round(double value) {
+		return Math.round(value * 100.0) / 100.0;
+	}
+	
+	public String toPrintableString() {
+
+		return String.format("%-6s,%-6s,%-6s,%-6s,%-6s,%-6s,%-6s,%-6s,%-6s,%-6s,%-6s", this.symbol,
+				round(this.now), round(this.low), round(this.high), round(this.nowPercent), round(this.lowPercent),
+				round(this.highPercent), sdf.format(this.lowDate), sdf.format(this.highDate), round(this.move),
+				round(this.differ));
+
+	}
+	
 	@Override
 	public String toString() {
 
-		return this.symbol + "," + round(this.close) + "," + round(this.low) + "," + round(this.lowPercent) + ","
-				+ sdf.format(this.lowDate) + "," + round(this.high) + "," + round(this.highPercent) + ","
-				+ sdf.format(this.highDate);
+		return String.format("%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%s,%s,%.2f,%.2f", this.symbol,
+				round(this.now), round(this.low), round(this.high), round(this.nowPercent), round(this.lowPercent),
+				round(this.highPercent), sdf.format(this.lowDate), sdf.format(this.highDate), round(this.move),
+				round(this.differ));
+
 	}
 
 }

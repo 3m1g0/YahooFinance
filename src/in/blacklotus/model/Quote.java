@@ -2,46 +2,46 @@ package in.blacklotus.model;
 
 public class Quote {
 
-	private double[] low;
+	private Double[] low;
 	
-	private double[] high;
+	private Double[] high;
 	
-	private double[] open;
+	private Double[] open;
 	
-	private double[] close;
+	private Double[] close;
 	
 	public Quote() {
 	}
 
-	public double[] getLow() {
+	public Double[] getLow() {
 		return low;
 	}
 
-	public void setLow(double[] low) {
+	public void setLow(Double[] low) {
 		this.low = low;
 	}
 
-	public double[] getHigh() {
+	public Double[] getHigh() {
 		return high;
 	}
 
-	public void setHigh(double[] high) {
+	public void setHigh(Double[] high) {
 		this.high = high;
 	}
 
-	public double[] getOpen() {
+	public Double[] getOpen() {
 		return open;
 	}
 
-	public void setOpen(double[] open) {
+	public void setOpen(Double[] open) {
 		this.open = open;
 	}
 
-	public double[] getClose() {
+	public Double[] getClose() {
 		return close;
 	}
 
-	public void setClose(double[] close) {
+	public void setClose(Double[] close) {
 		this.close = close;
 	}	
 }

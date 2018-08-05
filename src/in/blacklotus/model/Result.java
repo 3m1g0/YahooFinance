@@ -8,7 +8,6 @@ public class Result {
 	
 	private Indicators indicators;
 	
-
 	public Metadata getMeta() {
 		return meta;
 	}

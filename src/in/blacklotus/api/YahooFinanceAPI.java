@@ -7,6 +7,6 @@ import retrofit2.http.Path;
 
 public interface YahooFinanceAPI {
 
-	@GET("finance/chart/{stock}?interval=1d&range=1mo")
+	@GET("finance/chart/{stock}?interval=1d&range=10y")
 	Call<ResponseBody> getStockInfo(@Path("stock") String stock);
 }
