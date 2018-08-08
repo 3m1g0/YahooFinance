@@ -8,8 +8,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.jakewharton.fliptables.FlipTableConverters;
@@ -23,8 +28,16 @@ import okhttp3.ResponseBody;
 import retrofit2.Call;
 
 public class YahooFinance {
+	
+	final static Map<String, List<String>> params = new HashMap<>();
 
 	private static int NO_VALUES = 20;
+
+	private static String SORT_KEY = "DEFAULT";
+	
+	private static final String[] SORT_KEYS = {"Now", "LOW20", "HIGH20", "%LOW20", "%HIGH20", "%TODAY", "%MOVE", "%DIFFER"};
+
+	private static final String HEADER = "SYMBOL,NOW,LOW20,HIGH20,%(+/-) CHANGE TODAY, %(+/-) FROM LOW20,%(+/-) FROM HIGH20,LOW-DATE,HIGH-DATE,%MOVE,%DIFFER";
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
@@ -32,27 +45,54 @@ public class YahooFinance {
 
 	private static String outputFileName;
 
+	private static boolean processing = false;;
+	
+	private static int percentage = 0;
+
 	public static void main(String[] args) {
 
 		List<String> symbolList = new ArrayList<>();
 
 		String[] stocks = null;
+		
+		parseArguments(args);
+		
+		System.out.println(
+				"--------------------------------------------------------------------------------------------------------");
 
-		if (args.length > 0) {
+		if (params.containsKey("count")) {
 
-			NO_VALUES = Integer.parseInt(args[0]);
-
+			try {
+				
+				NO_VALUES = Integer.parseInt(params.get("count").get(0));
+			
+			} catch (NumberFormatException e) {
+				
+				System.out.println("***   Invalid COUNT value. Proceeding with default value 20   ***");
+			}
 		}
 
-		if (args.length > 1) {
+		if (params.containsKey("sort")) {
 
-			stocks = args[1].split(",");
+			SORT_KEY = params.get("sort").get(0);
+			
+			if(!isValidSortKey(SORT_KEY)) {
+				
+				System.out.println("***   Sort KEY must be one of " + Arrays.toString(SORT_KEYS) + "  ***");
+				
+				System.out.println("***   Proceeding without any sort option  ***");
+			}
+		}
+
+		if (params.containsKey("symbol")) {
+
+			stocks = params.get("symbol").toArray(new String[]{});
 
 		} else {
 
 			stocks = readInput();
 		}
-
+		
 		if (stocks == null) {
 
 			System.out.println(
@@ -68,6 +108,8 @@ public class YahooFinance {
 
 		System.out.println(
 				"--------------------------------------------------------------------------------------------------------");
+		
+		System.out.print("Fetching details for: ");
 
 		for (String stock : stocks) {
 
@@ -83,17 +125,26 @@ public class YahooFinance {
 
 		System.out.println();
 
-//		System.out.println(
-//				"--------------------------------------------------------------------------------------------------------");
-//
-//		System.out.println("SYMBOL\tNOW\tLOW20\tHIGH20\t%TODAY\t%LOW\t%HIGH\tLOW-DATE\tHIGH-DATE\t%MOVE\t%DIFFER");
-//
-//		System.out.println(
-//				"--------------------------------------------------------------------------------------------------------");
+		System.out.println(
+				"--------------------------------------------------------------------------------------------------------");
 
 		List<Stock> stocksList = new ArrayList<>();
+		
+		processing = true;
+		
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
 
-		for (String stock : symbolList) {
+				showProgress();
+			}
+		
+		}).start();
+
+		for (int i = 0; i < symbolList.size(); i++) {
+			
+			String stock = symbolList.get(i);
 
 			Stock stockDetail = getStockDetails(stock);
 
@@ -101,25 +152,71 @@ public class YahooFinance {
 
 				stocksList.add(stockDetail);
 			}
+			
+			percentage = (i + 1) * 100 / symbolList.size();
 		}
 		
-		String[] headers = { "SYMBOL", "NOW", "LOW20", "HIGH20", "%CHANGE TODAY", "%LOW", "%HIGH", "LOW-DATE", "HIGH-DATE", "%MOVE", "%DIFFER" };
-		String[][] data = new String[stocksList.size()][];
-		for(int i = 0; i < stocksList.size(); i++) {
-			data[i] = stocksList.get(i).toString().split(",");
+		processing = false;
+
+		if (!"DEFAULT".equals(SORT_KEY)) {
+
+			Collections.sort(stocksList, new Comparator<Stock>() {
+
+				@Override
+				public int compare(Stock s1, Stock s2) {
+
+					if (SORT_KEYS[0].equals(SORT_KEY)) {
+
+						return Double.compare(s1.getNow(), s2.getNow());
+
+					} else if (SORT_KEYS[1].equals(SORT_KEY)) {
+
+						return Double.compare(s1.getLow(), s2.getLow());
+
+					} else if (SORT_KEYS[2].equals(SORT_KEY)) {
+
+						return Double.compare(s1.getHigh(), s2.getHigh());
+
+					} else if (SORT_KEYS[3].equals(SORT_KEY)) {
+
+						return Double.compare(s1.getLowPercent(), s2.getLowPercent());
+
+					} else if (SORT_KEYS[4].equals(SORT_KEY)) {
+
+						return Double.compare(s1.getHighPercent(), s2.getHighPercent());
+
+					} else if (SORT_KEYS[5].equals(SORT_KEY)) {
+
+						return Double.compare(s1.getNowPercent(), s2.getNowPercent());
+
+					} else if (SORT_KEYS[6].equals(SORT_KEY)) {
+
+						return Double.compare(s1.getMove(), s2.getMove());
+
+					} else if (SORT_KEYS[7].equals(SORT_KEY)) {
+
+						return Double.compare(s1.getDiffer(), s2.getDiffer());
+
+					} else {
+
+						return s1.getSymbol().compareTo(s2.getSymbol());
+					}
+				}
+			});
 		}
+
+		String[] headers = HEADER.split(",");
+		
+		String[][] data = new String[stocksList.size()][];
+		
+		for (int i = 0; i < stocksList.size(); i++) {
+		
+			data[i] = stocksList.get(i).toPrintableString().split(",");
+		}
+		
 		System.out.println(FlipTableConverters.fromObjects(headers, data));
 
 		writeToFile(stocksList);
-
-//		System.out.println(
-//				"--------------------------------------------------------------------------------------------------------");
-//
-//		System.out.println(
-//				"------------------------------------ Finished creating CSV file ----------------------------------------");
-//
-//		System.out.println(
-//				"--------------------------------------------------------------------------------------------------------");
 	}
 
 	private static Stock getStockDetails(String stockName) {
@@ -144,11 +241,7 @@ public class YahooFinance {
 
 			String responseString = data.execute().body().string();
 
-			// System.out.println(responseString);
-
 			YahooResponse yahooResponse = new Gson().fromJson(responseString, YahooResponse.class);
-
-			// System.out.println(yahooResponse.toString());
 
 			metaData = yahooResponse.getChart().getResult()[0].getMeta();
 
@@ -174,10 +267,10 @@ public class YahooFinance {
 
 			stock.setName(metaData.getExchangeName());
 
-			stock.setNow(closeValues[closeValues.length - 1] == null ? 0 : closeValues[closeValues.length - 1]);
+			stock.setNow(closeValues[closeValues.length - 1] == null ? -9999 : closeValues[closeValues.length - 1]);
 
 			double nowPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null)
-					? 0
+					? -9999
 					: (closeValues[closeValues.length - 2] - stock.getNow()) * 100
 							/ closeValues[closeValues.length - 2];
 
@@ -202,8 +295,6 @@ public class YahooFinance {
 			stock.setHighDate(new Date(timestamps[highIndex] * 1000L));
 
 			stock.setLowDate(new Date(timestamps[lowIndex] * 1000L));
-
-//			System.out.println(stock.toPrintableString().replaceAll(",", "\t"));
 
 		} catch (IOException e) {
 
@@ -272,7 +363,7 @@ public class YahooFinance {
 
 			for (Stock stock : stocks) {
 
-				writer.println(stock.toString());
+				writer.println(stock.toPrintableString());
 			}
 
 			writer.close();
@@ -285,19 +376,30 @@ public class YahooFinance {
 
 	private static int getHighIndex(Double[] data) {
 
-		int max = data.length - NO_VALUES;
+		long count = 0;
 
-		for (int i = data.length - NO_VALUES + 1; i < data.length; i++) {
+		int max = data.length - 1;
 
-			if (data[i] == null) {
+		int index = data.length - 2;
+
+		while (index > -1 && count < NO_VALUES) {
+
+			if (data[index] == null) {
+
+				index--;
 
 				continue;
 			}
 
-			if (data[i] > data[max]) {
+			if (data[index] > data[max]) {
 
-				max = i;
+				max = index;
+
 			}
+
+			count++;
+
+			index--;
 		}
 
 		return max;
@@ -305,19 +407,30 @@ public class YahooFinance {
 
 	private static int getLowIndex(Double[] data) {
 
-		int min = data.length - NO_VALUES;
+		int count = 0;
 
-		for (int i = data.length - NO_VALUES + 1; i < data.length; i++) {
+		int min = data.length - 1;
 
-			if (data[i] == null) {
+		int index = data.length - 2;
+
+		while (index > -1 && count < NO_VALUES) {
+
+			if (data[index] == null) {
+
+				index--;
 
 				continue;
 			}
 
-			if (data[i] < data[min]) {
+			if (data[index] < data[min]) {
 
-				min = i;
+				min = index;
+
 			}
+
+			count++;
+
+			index--;
 		}
 
 		return min;
@@ -357,4 +470,70 @@ public class YahooFinance {
 			}
 		}
 	}
+
+	private static void parseArguments(String args[]) {
+		
+		List<String> options = null;
+		
+		for (int i = 0; i < args.length; i++) {
+		
+			final String a = args[i];
+
+			if (a.charAt(0) == '-') {
+			
+				if (a.length() < 2) {
+				
+					System.err.println("Error at argument " + a);
+					
+					return;
+				}
+
+				options = new ArrayList<>();
+				
+				params.put(a.substring(1), options);
+			
+			} else if (options != null) {
+			
+				options.add(a);
+			
+			} else {
+				
+				System.err.println("Illegal parameter usage");
+				
+				return;
+			}
+		}
+	}
+	
+	private static boolean isValidSortKey(String key) {
+		
+		for(String k: SORT_KEYS) {
+			
+			if(k.equals(key))
+				
+				return true;
+		}
+		
+		return false;
+	}
+	
+	private static void showProgress() {
+        
+		char[] animationChars = new char[]{'|', '/', '-', '\\'};
+        
+        int i = 0;
+
+        while(processing) {
+        	
+            System.out.print("Processing: " + percentage + "% " + animationChars[i++ % 4] + "\r");
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("                          ");
+    }
 }

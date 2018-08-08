@@ -163,21 +163,31 @@ public class Stock {
 	private double round(double value) {
 		return Math.round(value * 100.0) / 100.0;
 	}
-	
+
+	private String getPrintableData(double value) {
+		if (value == -9999) {
+			return "-";
+		} else if (value > 0) {
+			return "+" + value + "%";
+		} else {
+			return value + "%";
+		}
+	}
+
 	public String toPrintableString() {
 
-		return String.format("%-6s,%-6s,%-6s,%-6s,%-6s,%-6s,%-6s,%-6s,%-6s,%-6s,%-6s", this.symbol,
-				round(this.now), round(this.low), round(this.high), round(this.nowPercent), round(this.lowPercent),
-				round(this.highPercent), sdf.format(this.lowDate), sdf.format(this.highDate), round(this.move),
-				round(this.differ));
+		return String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", this.symbol, round(this.now), round(this.low),
+				round(this.high), getPrintableData(round(this.nowPercent)), getPrintableData(round(this.lowPercent)),
+				getPrintableData(round(this.highPercent)), sdf.format(this.lowDate), sdf.format(this.highDate),
+				getPrintableData(round(this.move)), getPrintableData(round(this.differ)));
 
 	}
-	
+
 	@Override
 	public String toString() {
 
-		return String.format("%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%s,%s,%.2f,%.2f", this.symbol,
-				round(this.now), round(this.low), round(this.high), round(this.nowPercent), round(this.lowPercent),
+		return String.format("%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%s,%s,%.2f,%.2f", this.symbol, round(this.now),
+				round(this.low), round(this.high), round(this.nowPercent), round(this.lowPercent),
 				round(this.highPercent), sdf.format(this.lowDate), sdf.format(this.highDate), round(this.move),
 				round(this.differ));
 
