@@ -5,6 +5,10 @@ import java.util.Date;
 
 public class Stock {
 
+	public static final String[] KEYS = { "NOW", "LOW20", "HIGH20", "%LOW20", "%HIGH20", "%TODAY", "%MOVE", "%DIFFER" };
+
+	private static final String[] OPERATORS = { "<=", "<", ">=", ">", "==", "!=" };
+
 	private String currency;
 
 	private String name;
@@ -172,6 +176,175 @@ public class Stock {
 		} else {
 			return value + "%";
 		}
+	}
+
+	public boolean applyFilter(String filter) {
+
+		boolean status = true;
+
+		if (filter != null) {
+
+			String split[] = null;
+
+			if (filter.contains("&&")) {
+
+				split = filter.split("&&");
+				
+			} else if (filter.contains("||")) {
+
+				split = filter.split("\\|\\|");
+				
+			} else {
+
+				split = new String[] { filter };
+			}
+
+			if (split != null && split.length > 0) {
+
+				status = evaluate(split[split.length - 1]);
+
+				for (int i = split.length - 2; i >= 0; i--) {
+
+					if (filter.contains("&&")) {
+
+						status = status && evaluate(split[i]);
+
+					} else if (filter.contains("||")) {
+
+						status = status || evaluate(split[i]);
+					}
+				}
+			}
+		}
+
+		return status;
+	}
+
+	private boolean evaluate(String expression) {
+
+		if (expression != null) {
+
+			expression = expression.trim();
+			
+			String operator = getOperator(expression);
+
+			double operands[] = null;
+
+			if (operator != null) {
+
+				operands = getOperands(expression, operator);
+
+				if (OPERATORS[0].equals(operator)) {
+
+					return operands[0] <= operands[1];
+
+				} else if (OPERATORS[1].equals(operator)) {
+
+					return operands[0] < operands[1];
+
+				} else if (OPERATORS[2].equals(operator)) {
+
+					return operands[0] >= operands[1];
+
+				} else if (OPERATORS[3].equals(operator)) {
+
+					return operands[0] > operands[1];
+
+				} else if (OPERATORS[4].equals(operator)) {
+
+					return operands[0] == operands[1];
+
+				} else if (OPERATORS[5].equals(operator)) {
+
+					return operands[0] != operands[1];
+
+				} else {
+
+					return true;
+				}
+
+			} else {
+
+				return true;
+			}
+
+		} else {
+
+			return true;
+		}
+
+	}
+
+	private String getOperator(String expression) {
+
+		for (String op : OPERATORS) {
+
+			if (expression.contains(op)) {
+
+				return op;
+			}
+		}
+
+		return null;
+	}
+
+	private double[] getOperands(String expression, String operator) {
+
+		double lhs = -9999;
+
+		double rhs = -9999;
+
+		String split[] = expression.split(operator);
+
+		if (split.length == 2) {
+
+			lhs = round(getValueForKey(split[0]));
+
+			rhs = Double.parseDouble(split[1]);
+		}
+
+		return new double[] { lhs, rhs };
+	}
+
+	private double getValueForKey(String key) {
+
+		if (KEYS[0].equals(key)) {
+
+			return getNow();
+
+		} else if (KEYS[1].equals(key)) {
+
+			return getLow();
+
+		} else if (KEYS[2].equals(key)) {
+
+			return getHigh();
+
+		} else if (KEYS[3].equals(key)) {
+
+			return getLowPercent();
+
+		} else if (KEYS[4].equals(key)) {
+
+			return getHighPercent();
+
+		} else if (KEYS[5].equals(key)) {
+
+			return getNowPercent();
+
+		} else if (KEYS[6].equals(key)) {
+
+			return getMove();
+
+		} else if (KEYS[7].equals(key)) {
+
+			return getDiffer();
+
+		} else {
+
+			return -9999;
+		}
+
 	}
 
 	public String toPrintableString() {

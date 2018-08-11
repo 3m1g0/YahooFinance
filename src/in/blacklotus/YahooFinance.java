@@ -35,7 +35,9 @@ public class YahooFinance {
 
 	private static String SORT_KEY = "DEFAULT";
 	
-	private static final String[] SORT_KEYS = {"Now", "LOW20", "HIGH20", "%LOW20", "%HIGH20", "%TODAY", "%MOVE", "%DIFFER"};
+	private static String FILTER = null;
+	
+	private static final String[] SORT_KEYS = {"NOW", "LOW20", "HIGH20", "%LOW20", "%HIGH20", "%TODAY", "%MOVE", "%DIFFER"};
 
 	private static final String HEADER = "SYMBOL,NOW,LOW20,HIGH20,%(+/-) CHANGE TODAY, %(+/-) FROM LOW20,%(+/-) FROM HIGH20,LOW-DATE,HIGH-DATE,%MOVE,%DIFFER";
 
@@ -82,6 +84,11 @@ public class YahooFinance {
 				
 				System.out.println("***   Proceeding without any sort option  ***");
 			}
+		}
+		
+		if (params.containsKey("filter")) {
+
+			FILTER = params.get("filter").get(0);
 		}
 
 		if (params.containsKey("symbol")) {
@@ -150,7 +157,10 @@ public class YahooFinance {
 
 			if (stockDetail != null) {
 
-				stocksList.add(stockDetail);
+				if(stockDetail.applyFilter(FILTER)) {
+					
+					stocksList.add(stockDetail);
+				}
 			}
 			
 			percentage = (i + 1) * 100 / symbolList.size();
@@ -271,7 +281,7 @@ public class YahooFinance {
 
 			double nowPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null)
 					? -9999
-					: (closeValues[closeValues.length - 2] - stock.getNow()) * 100
+					: (stock.getNow() - closeValues[closeValues.length - 2]) * 100
 							/ closeValues[closeValues.length - 2];
 
 			stock.setNowPercent(nowPercent);
