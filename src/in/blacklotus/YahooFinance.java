@@ -1,11 +1,14 @@
 package in.blacklotus;
 
+import java.awt.AWTException;
+import java.awt.SystemTray;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,52 +27,65 @@ import in.blacklotus.model.Metadata;
 import in.blacklotus.model.Stock;
 import in.blacklotus.model.YahooResponse;
 import in.blacklotus.utils.NetworkUtils;
+import in.blacklotus.utils.Scheduler;
+import in.blacklotus.utils.Utils;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 
 public class YahooFinance {
-	
+
 	final static Map<String, List<String>> params = new HashMap<>();
 
 	private static int NO_VALUES = 20;
 
 	private static String SORT_KEY = "DEFAULT";
-	
-	private static String FILTER = null;
-	
-	private static final String[] SORT_KEYS = {"NOW", "LOW20", "HIGH20", "%LOW20", "%HIGH20", "%TODAY", "%MOVE", "%DIFFER"};
 
-	private static final String HEADER = "SYMBOL,NOW,LOW20,HIGH20,%(+/-) CHANGE TODAY, %(+/-) FROM LOW20,%(+/-) FROM HIGH20,LOW-DATE,HIGH-DATE,%MOVE,%DIFFER";
+	private static String FILTER = null;
+
+	private static int REPEAT = -1;
+
+	private static final String[] SORT_KEYS = { "NOW", "LOW20", "HIGH20", "%LOW20", "%HIGH20", "%TODAY", "%MOVE",
+			"%DIFFER" };
+
+	private static final String HEADER = "SL.NO.,SYMBOL,NOW,LOW20,HIGH20,%(+/-) CHANGE TODAY, %(+/-) FROM LOW20,%(+/-) FROM HIGH20,LOW-DATE,HIGH-DATE,%MOVE,%DIFFER";
 
 	private static final String INPUT_FILE_NAME = "input.csv";
+
+	private static String[] percentages;
 
 	private static String outputDir;
 
 	private static String outputFileName;
 
-	private static boolean processing = false;;
-	
+	private static boolean processing = false;
+
+	private static boolean refreshing = false;
+
+	private static long nextUpdateTime = 0L;
+
 	private static int percentage = 0;
 
 	public static void main(String[] args) {
 
 		List<String> symbolList = new ArrayList<>();
 
+		List<String> percentageList = new ArrayList<>();
+
 		String[] stocks = null;
-		
+
 		parseArguments(args);
-		
+
 		System.out.println(
 				"--------------------------------------------------------------------------------------------------------");
 
 		if (params.containsKey("count")) {
 
 			try {
-				
+
 				NO_VALUES = Integer.parseInt(params.get("count").get(0));
-			
+
 			} catch (NumberFormatException e) {
-				
+
 				System.out.println("***   Invalid COUNT value. Proceeding with default value 20   ***");
 			}
 		}
@@ -77,29 +93,41 @@ public class YahooFinance {
 		if (params.containsKey("sort")) {
 
 			SORT_KEY = params.get("sort").get(0);
-			
-			if(!isValidSortKey(SORT_KEY)) {
-				
+
+			if (!isValidSortKey(SORT_KEY)) {
+
 				System.out.println("***   Sort KEY must be one of " + Arrays.toString(SORT_KEYS) + "  ***");
-				
+
 				System.out.println("***   Proceeding without any sort option  ***");
 			}
 		}
-		
+
 		if (params.containsKey("filter")) {
 
 			FILTER = params.get("filter").get(0);
 		}
 
+		if (params.containsKey("repeat")) {
+
+			try {
+
+				REPEAT = Integer.parseInt(params.get("repeat").get(0));
+
+			} catch (NumberFormatException e) {
+
+				System.out.println("***   Invalid REPEAT value. Aborting scheduler   ***");
+			}
+		}
+
 		if (params.containsKey("symbol")) {
 
-			stocks = params.get("symbol").toArray(new String[]{});
+			stocks = params.get("symbol").toArray(new String[] {});
 
 		} else {
 
 			stocks = readInput();
 		}
-		
+
 		if (stocks == null) {
 
 			System.out.println(
@@ -113,18 +141,66 @@ public class YahooFinance {
 			return;
 		}
 
+		processData(symbolList, percentageList, stocks, false);
+
+		if (REPEAT > 0) {
+			
+			nextUpdateTime = System.currentTimeMillis() + 60 * REPEAT * 1000;
+
+			refreshing = true;
+
+			showRefreshing();
+
+			final String[] mStocks = stocks;
+
+			Scheduler scheduler = new Scheduler(REPEAT, new Scheduler.SchedulerCallback() {
+
+				@Override
+				public void onTrigger() {
+
+					nextUpdateTime = System.currentTimeMillis() + REPEAT * 60 * 1000;
+
+					processData(symbolList, percentageList, mStocks, true);
+
+					refreshing = true;
+
+					showRefreshing();
+				}
+			});
+
+			scheduler.start();
+
+		}
+	}
+
+	private static void processData(List<String> symbolList, List<String> percentageList, String[] stocks,
+			boolean applyRepeat) {
+
+		symbolList.clear();
+
+		percentageList.clear();
+
 		System.out.println(
 				"--------------------------------------------------------------------------------------------------------");
-		
+
 		System.out.print("Fetching details for: ");
 
-		for (String stock : stocks) {
+		for (int i = 0; i < stocks.length; i++) {
+
+			String stock = stocks[i];
 
 			stock = stock.trim();
 
 			if (!"".equals(stock)) {
 
 				symbolList.add(stock);
+
+				if (percentages != null && i < percentages.length) {
+
+					percentageList.add(percentages[i]);
+
+					System.out.print(percentages[i] + "-");
+				}
 
 				System.out.print(stock + ",");
 			}
@@ -136,36 +212,48 @@ public class YahooFinance {
 				"--------------------------------------------------------------------------------------------------------");
 
 		List<Stock> stocksList = new ArrayList<>();
-		
+
+		refreshing = false;
+
 		processing = true;
-		
+
 		new Thread(new Runnable() {
-			
+
 			@Override
 			public void run() {
 
 				showProgress();
 			}
-		
+
 		}).start();
 
 		for (int i = 0; i < symbolList.size(); i++) {
-			
+
 			String stock = symbolList.get(i);
 
 			Stock stockDetail = getStockDetails(stock);
 
 			if (stockDetail != null) {
 
-				if(stockDetail.applyFilter(FILTER)) {
-					
-					stocksList.add(stockDetail);
+				if (stockDetail.applyFilter(FILTER)) {
+
+					if (applyRepeat && REPEAT > 0) {
+
+						if (stockDetail.applyRepeat(percentageList.get(i))) {
+
+							stocksList.add(stockDetail);
+						}
+
+					} else {
+
+						stocksList.add(stockDetail);
+					}
 				}
 			}
-			
+
 			percentage = (i + 1) * 100 / symbolList.size();
 		}
-		
+
 		processing = false;
 
 		if (!"DEFAULT".equals(SORT_KEY)) {
@@ -216,15 +304,32 @@ public class YahooFinance {
 		}
 
 		String[] headers = HEADER.split(",");
-		
+
 		String[][] data = new String[stocksList.size()][];
-		
+
 		for (int i = 0; i < stocksList.size(); i++) {
-		
-			data[i] = stocksList.get(i).toPrintableString().split(",");
+
+			data[i] = stocksList.get(i).toPrintableString(i + 1).split(",");
 		}
-		
+
 		System.out.println(FlipTableConverters.fromObjects(headers, data));
+		
+		if(applyRepeat) {
+			
+//			Utils.sendEmail(FlipTableConverters.fromObjects(headers, data));
+			
+			if (SystemTray.isSupported()) {
+	            try {
+					Utils.displayTray();
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				} catch (AWTException e) {
+					e.printStackTrace();
+				}
+	        } else {
+	            System.err.println("System tray not supported!");
+	        }
+		}
 
 		writeToFile(stocksList);
 	}
@@ -323,7 +428,9 @@ public class YahooFinance {
 			return null;
 		}
 
-		String input = null;
+		String input1 = null;
+
+		String input2 = null;
 
 		BufferedReader reader;
 
@@ -331,7 +438,9 @@ public class YahooFinance {
 
 			reader = new BufferedReader(new FileReader(inputFile));
 
-			input = reader.readLine();
+			input1 = reader.readLine();
+
+			input2 = reader.readLine();
 
 			reader.close();
 
@@ -340,9 +449,14 @@ public class YahooFinance {
 			e.printStackTrace();
 		}
 
-		if (input != null) {
+		if (input1 != null) {
 
-			return input.split(",");
+			if (input2 != null) {
+
+				percentages = input2.split(",");
+			}
+
+			return input1.split(",");
 
 		} else {
 
@@ -368,12 +482,13 @@ public class YahooFinance {
 
 			PrintWriter writer = new PrintWriter(new FileWriter(file));
 
-			writer.println(
-					"SYMBOL,NOW,LOW20,HIGH20,%(+/-) CHANGE TODAY, %(+/-) FROM LOW20,%(+/-) FROM HIGH20,LOW-DATE,HIGH-DATE,%MOVE,%DIFFER");
+			writer.println(HEADER);
 
-			for (Stock stock : stocks) {
+			for (int i = 0; i < stocks.size(); i++) {
 
-				writer.println(stock.toPrintableString());
+				Stock stock = stocks.get(i);
+
+				writer.println(stock.toPrintableString(i + 1));
 			}
 
 			writer.close();
@@ -482,68 +597,100 @@ public class YahooFinance {
 	}
 
 	private static void parseArguments(String args[]) {
-		
+
 		List<String> options = null;
-		
+
 		for (int i = 0; i < args.length; i++) {
-		
+
 			final String a = args[i];
 
 			if (a.charAt(0) == '-') {
-			
+
 				if (a.length() < 2) {
-				
+
 					System.err.println("Error at argument " + a);
-					
+
 					return;
 				}
 
 				options = new ArrayList<>();
-				
+
 				params.put(a.substring(1), options);
-			
+
 			} else if (options != null) {
-			
+
 				options.add(a);
-			
+
 			} else {
-				
+
 				System.err.println("Illegal parameter usage");
-				
+
 				return;
 			}
 		}
 	}
-	
+
 	private static boolean isValidSortKey(String key) {
-		
-		for(String k: SORT_KEYS) {
-			
-			if(k.equals(key))
-				
+
+		for (String k : SORT_KEYS) {
+
+			if (k.equals(key))
+
 				return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	private static void showProgress() {
-        
-		char[] animationChars = new char[]{'|', '/', '-', '\\'};
-        
-        int i = 0;
 
-        while(processing) {
-        	
-            System.out.print("Processing: " + percentage + "% " + animationChars[i++ % 4] + "\r");
+		char[] animationChars = new char[] { '|', '/', '-', '\\' };
 
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+		int i = 0;
 
-        System.out.println("                          ");
-    }
+		while (processing) {
+
+			System.out.print(" Processing: " + percentage + "% " + animationChars[i++ % 4] + "\r");
+
+			try {
+
+				Thread.sleep(100);
+
+			} catch (InterruptedException e) {
+
+				e.printStackTrace();
+			}
+		}
+
+		System.out.println("                          ");
+	}
+
+	private static void showRefreshing() {
+
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+
+				while (refreshing) {
+
+					String duration = Utils.toDuration(nextUpdateTime - System.currentTimeMillis());
+					
+					System.out.print(" Refreshing in " + duration + "                          \r");
+
+					try {
+
+						Thread.sleep(100);
+
+					} catch (InterruptedException e) {
+
+						e.printStackTrace();
+					}
+				}
+
+				System.out.println("                          ");
+			}
+
+		}).start();
+	}
 }

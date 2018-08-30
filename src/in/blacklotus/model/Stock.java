@@ -177,6 +177,21 @@ public class Stock {
 			return value + "%";
 		}
 	}
+	
+	public boolean applyRepeat(String percent) {
+		
+		try {
+			
+			double mPercent = Double.parseDouble(percent);
+			
+			return (this.nowPercent >  mPercent);
+			
+		} catch (Exception e) {
+			
+			return true;
+		}
+		
+	}
 
 	public boolean applyFilter(String filter) {
 
@@ -347,9 +362,9 @@ public class Stock {
 
 	}
 
-	public String toPrintableString() {
+	public String toPrintableString(int index) {
 
-		return String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", this.symbol, round(this.now), round(this.low),
+		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", index, this.symbol, round(this.now), round(this.low),
 				round(this.high), getPrintableData(round(this.nowPercent)), getPrintableData(round(this.lowPercent)),
 				getPrintableData(round(this.highPercent)), sdf.format(this.lowDate), sdf.format(this.highDate),
 				getPrintableData(round(this.move)), getPrintableData(round(this.differ)));
