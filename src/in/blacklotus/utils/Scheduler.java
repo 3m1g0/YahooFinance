@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit;
 public class Scheduler {
 
 	private int ferquency;
+	
+	private TimeUnit timeUnit;
 
 	private ScheduledExecutorService ses;
 
@@ -17,11 +19,13 @@ public class Scheduler {
 		super();
 	}
 
-	public Scheduler(int frequency, SchedulerCallback schedulerCallback) {
+	public Scheduler(int frequency, TimeUnit timeUnit, SchedulerCallback schedulerCallback) {
 
 		super();
 
 		this.ferquency = frequency;
+		
+		this.timeUnit = timeUnit;
 
 		this.setSchedulerCallback(schedulerCallback);
 	}
@@ -41,7 +45,7 @@ public class Scheduler {
 				}
 			}
 
-		}, this.ferquency, this.ferquency, TimeUnit.MINUTES);
+		}, 0, this.ferquency, this.timeUnit);
 	}
 
 	public void stop() {

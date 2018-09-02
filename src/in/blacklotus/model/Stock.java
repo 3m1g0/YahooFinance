@@ -178,17 +178,21 @@ public class Stock {
 		}
 	}
 	
-	public boolean applyRepeat(String percent) {
+	public boolean applyRepeatFilter(Symbol symbol) {
 		
 		try {
 			
-			double mPercent = Double.parseDouble(percent);
+			double mPrice = Double.parseDouble(symbol.getPrice());
 			
-			return (this.nowPercent >  mPercent);
+			double mDelta = Double.parseDouble(symbol.getDelta());
+			
+			double deltaPrice = mPrice * (mDelta / 100);
+			
+			return (Math.abs(this.now - mPrice) <= deltaPrice);
 			
 		} catch (Exception e) {
 			
-			return true;
+			return false;
 		}
 		
 	}
