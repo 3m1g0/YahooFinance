@@ -10,6 +10,8 @@ public class Quote {
 	
 	private Double[] close;
 	
+	private Double[] volume;
+	
 	public Quote() {
 	}
 
@@ -43,5 +45,13 @@ public class Quote {
 
 	public void setClose(Double[] close) {
 		this.close = close;
+	}
+
+	public Double[] getVolume() {
+		return volume;
+	}
+
+	public void setVolume(Double[] volume) {
+		this.volume = volume;
 	}	
 }

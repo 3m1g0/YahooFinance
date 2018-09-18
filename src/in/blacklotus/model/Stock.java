@@ -16,6 +16,8 @@ public class Stock {
 	private String symbol;
 
 	private double now;
+	
+	private double volume;
 
 	private double low;
 
@@ -26,6 +28,8 @@ public class Stock {
 	private double lowPercent;
 
 	private double highPercent;
+	
+	private Date nowDate;
 
 	private Date highDate;
 
@@ -35,7 +39,7 @@ public class Stock {
 
 	private double move;
 
-	private SimpleDateFormat sdf;
+	protected SimpleDateFormat sdf;
 
 	public Stock() {
 
@@ -92,6 +96,14 @@ public class Stock {
 		this.now = close;
 	}
 
+	public double getVolume() {
+		return volume;
+	}
+
+	public void setVolume(double volume) {
+		this.volume = volume;
+	}
+
 	public double getLow() {
 		return low;
 	}
@@ -131,6 +143,14 @@ public class Stock {
 	public void setHighPercent(double highPercent) {
 		this.highPercent = highPercent;
 	}
+	
+	public Date getNowDate() {
+		return nowDate;
+	}
+
+	public void setNowDate(Date nowDate) {
+		this.nowDate = nowDate;
+	}
 
 	public Date getHighDate() {
 		return highDate;
@@ -164,7 +184,7 @@ public class Stock {
 		this.move = move;
 	}
 
-	private double round(double value) {
+	protected double round(double value) {
 		return Math.round(value * 100.0) / 100.0;
 	}
 

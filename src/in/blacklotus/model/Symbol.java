@@ -7,23 +7,23 @@ public class Symbol {
 	private String price;
 
 	private String delta;
-	
-	private String now;
+
+	private double now;
 
 	public Symbol() {
 	}
-	
+
 	public Symbol(String name) {
-		
+
 		this.name = name;
 	}
 
 	public Symbol(String name, String price, String delta) {
-		
+
 		this.name = name;
-		
+
 		this.price = price;
-		
+
 		this.delta = delta;
 	}
 
@@ -50,17 +50,19 @@ public class Symbol {
 	public void setDelta(String delta) {
 		this.delta = delta;
 	}
-	
-	public String getNow() {
+
+	public double getNow() {
 		return now;
 	}
 
 	public void setNow(double now) {
-		this.now = String.valueOf(now);
+		this.now = now;
 	}
-	
+
 	public String toPrintableString(int slNo) {
-		return String.format("%d,%s is the current price of %s with target price: %s and delta: %s", slNo, now, name, price, delta);
+		return String.format(
+				"%d,[$%.2f] of [%s] is around target price: $%s & target percent: %s%%",
+				slNo, now, name, price, delta);
 	}
 
 	@Override

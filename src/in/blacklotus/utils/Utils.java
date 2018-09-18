@@ -74,7 +74,7 @@ public class Utils {
 
 	public static void sendEmail(String body) {
 
-		String to = "ktdaiict@gmail.com";
+		String to = "gopiparimi@gmail.com";
 
 		Properties props = new Properties();
 
@@ -92,7 +92,7 @@ public class Utils {
 
 			protected PasswordAuthentication getPasswordAuthentication() {
 
-				return new PasswordAuthentication("teja.tangaturi@gmail.com", "Teja@123");
+				return new PasswordAuthentication("nadopicks@gmail.com", "IpikTradePi*");
 			}
 		});
 
@@ -137,13 +137,13 @@ public class Utils {
 		trayIcon.displayMessage("Hello, World", "notification demo", MessageType.INFO);
 	}
 
-	public static void displayTray(String title, String message) {
+	public static void displayTray(String[] headers, String[][] data) {
 
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
 					YahooFinanceApp window = new YahooFinanceApp();
-					window.show();
+					window.show(headers, data);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
