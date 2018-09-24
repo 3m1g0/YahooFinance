@@ -7,13 +7,13 @@ public class TrendData {
 
 	private Double value;
 	
-	private Double volume;
+	private long volume;
 
 	private long timestamp;
 
 	private SimpleDateFormat sdf;
 
-	public TrendData(Double value, long timestamp, Double volume) {
+	public TrendData(Double value, long timestamp, long volume) {
 
 		this.value = value;
 		
@@ -42,11 +42,11 @@ public class TrendData {
 		this.timestamp = timestamp;
 	}
 
-	public Double getVolume() {
+	public long getVolume() {
 		return volume;
 	}
 
-	public void setVolume(Double volume) {
+	public void setVolume(long volume) {
 		this.volume = volume;
 	}
 

@@ -9,7 +9,6 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -33,6 +32,7 @@ import in.blacklotus.utils.Scheduler;
 import in.blacklotus.utils.Utils;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
+import retrofit2.Response;
 
 public class YahooFinance {
 
@@ -76,7 +76,7 @@ public class YahooFinance {
 		final List<Symbol> symbolList = new ArrayList<>();
 
 		parseArguments(args);
-		
+
 		System.out.println(new Date(1537277520 * 1000L));
 
 		System.out.println(
@@ -200,9 +200,9 @@ public class YahooFinance {
 			scheduler.start();
 
 		} else if (TREND != null) {
-			
+
 			processTrendData(symbolList);
-			
+
 		} else {
 
 			processData(symbolList);
@@ -387,7 +387,7 @@ public class YahooFinance {
 			Symbol symbol = symbolList.get(i);
 
 			Trend trendDetail = getTrendDetails(symbol.getName());
-			
+
 			if (trendDetail != null) {
 
 				if (trendDetail.isValidTrend()) {
@@ -400,21 +400,22 @@ public class YahooFinance {
 		}
 
 		processing = false;
-		
-		String[] headers = new String[] { "#", "SYMBOL", "NOW", TREND.toUpperCase() + "TREND", "$CHANGE", "VOLUME" };
-		
+
+		String[] headers = new String[] { "#", "SYMBOL", "NOW", TREND.toUpperCase() + "TREND", "$CHANGE", "%$CHANGE",
+				"VOLUME", "%VOLCHANGE" };
+
 		List<String[]> tmp = new ArrayList<>();
-		
+
 		for (int i = 0; i < processedTrendList.size(); i++) {
-			
-			for(int j = 0; j < processedTrendList.get(i).toPrintableStrings(i + 1).length; j++) {
-				
-				tmp.add(processedTrendList.get(i).toPrintableStrings(i + 1)[j].split(","));
+
+			for (int j = 0; j < processedTrendList.get(i).toPrintableStrings(i + 1).length; j++) {
+
+				tmp.add(processedTrendList.get(i).toPrintableStrings(i + 1)[j].split("_"));
 			}
 		}
 
 		String[][] data = new String[tmp.size()][];
-		
+
 		for (int i = 0; i < tmp.size(); i++) {
 
 			data[i] = tmp.get(i);
@@ -432,8 +433,8 @@ public class YahooFinance {
 		Double[] lowValues;
 
 		Double[] highValues;
-		
-		Double[] volumes;
+
+		Long[] volumes;
 
 		long[] timestamps;
 
@@ -445,7 +446,14 @@ public class YahooFinance {
 
 		try {
 
-			String responseString = data.execute().body().string();
+			Response<ResponseBody> execute = data.execute();
+
+			if (execute.code() != 200) {
+
+				return new Stock(stockName);
+			}
+
+			String responseString = execute.body().string();
 
 			YahooResponse yahooResponse = new Gson().fromJson(responseString, YahooResponse.class);
 
@@ -463,7 +471,7 @@ public class YahooFinance {
 
 				NO_VALUES = closeValues.length;
 			}
-			
+
 			volumes = yahooResponse.getChart().getResult()[0].getIndicators().getQuote()[0].getVolume();
 
 			lowValues = yahooResponse.getChart().getResult()[0].getIndicators().getQuote()[0].getLow();
@@ -477,8 +485,8 @@ public class YahooFinance {
 			stock.setName(metaData.getExchangeName());
 
 			stock.setNow(closeValues[closeValues.length - 1] == null ? -9999 : closeValues[closeValues.length - 1]);
-			
-			stock.setVolume(volumes[volumes.length - 1] == null ? -9999 : volumes[volumes.length - 1]);
+
+			stock.setVolume(volumes[volumes.length - 1]);
 
 			double nowPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null)
 					? -9999
@@ -502,7 +510,7 @@ public class YahooFinance {
 			stock.calculateDiffer();
 
 			stock.calculateMove();
-			
+
 			stock.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
 			stock.setHighDate(new Date(timestamps[highIndex] * 1000L));
@@ -526,8 +534,8 @@ public class YahooFinance {
 		Double[] lowValues;
 
 		Double[] highValues;
-		
-		Double[] volumes;
+
+		Long[] volumes;
 
 		long[] timestamps;
 
@@ -539,7 +547,14 @@ public class YahooFinance {
 
 		try {
 
-			String responseString = data.execute().body().string();
+			Response<ResponseBody> execute = data.execute();
+
+			if (execute.code() != 200) {
+
+				return new Trend();
+			}
+			
+			String responseString = execute.body().string();
 
 			YahooResponse yahooResponse = new Gson().fromJson(responseString, YahooResponse.class);
 
@@ -555,15 +570,15 @@ public class YahooFinance {
 
 			} else if (closeValues.length < NO_VALUES) {
 
-//				NO_VALUES = closeValues.length;
+				// NO_VALUES = closeValues.length;
 			}
-			
+
 			volumes = yahooResponse.getChart().getResult()[0].getIndicators().getQuote()[0].getVolume();
 
 			lowValues = yahooResponse.getChart().getResult()[0].getIndicators().getQuote()[0].getLow();
 
 			highValues = yahooResponse.getChart().getResult()[0].getIndicators().getQuote()[0].getHigh();
-			
+
 			trend.setType(TREND.toUpperCase());
 
 			trend.setCurrency(metaData.getCurrency());
@@ -571,10 +586,10 @@ public class YahooFinance {
 			trend.setSymbol(metaData.getSymbol());
 
 			trend.setName(metaData.getExchangeName());
-			
+
 			trend.setNow(closeValues[closeValues.length - 1] == null ? -9999 : closeValues[closeValues.length - 1]);
-			
-			trend.setVolume(volumes[volumes.length - 1] == null ? -9999 : volumes[volumes.length - 1]);
+
+			trend.setVolume(volumes[volumes.length - 1]);
 
 			double nowPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null)
 					? -9999
@@ -598,7 +613,7 @@ public class YahooFinance {
 			trend.calculateDiffer();
 
 			trend.calculateMove();
-			
+
 			trend.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
 			trend.setHighDate(new Date(timestamps[highIndex] * 1000L));
@@ -606,7 +621,7 @@ public class YahooFinance {
 			trend.setLowDate(new Date(timestamps[lowIndex] * 1000L));
 
 			trend.setTrend(getTrend(closeValues, timestamps, volumes));
-			
+
 		} catch (IOException e) {
 
 			e.printStackTrace();
@@ -836,34 +851,39 @@ public class YahooFinance {
 		return min;
 	}
 
-	private static List<TrendData> getTrend(Double closeValues[], long timestamps[], Double volumes[]) {
+	private static List<TrendData> getTrend(Double closeValues[], long timestamps[], Long volumes[]) {
 
 		ArrayList<TrendData> values = new ArrayList<>();
-		
-		Calendar current = Calendar.getInstance();
-		
-//		Calendar actual = Calendar.getInstance();
-		
-		int count = 0;
-		while (count < NO_VALUES) {
-		
-			current.setTimeInMillis(timestamps[timestamps.length - count - 1] * 1000L);
-			
-//			int lhs = current.get(Calendar.DATE);
-			
-//			actual.add(Calendar.DATE, -1);
-			
-//			int rhs = actual.get(Calendar.DATE);
-			
-			count++;
-			
-//			if(lhs == rhs) {
-			
-				values.add(new TrendData(closeValues[closeValues.length - count - 1], timestamps[timestamps.length - count - 1] * 1000L,
-						volumes[volumes.length - count - 1]));
-//			}
+
+		// Calendar current = Calendar.getInstance();
+
+		// Calendar actual = Calendar.getInstance();
+
+		int count = NO_VALUES;
+
+		if (closeValues.length >= NO_VALUES) {
+
+			while (count > 0) {
+
+				// current.setTimeInMillis(timestamps[timestamps.length - count
+				// - 1] * 1000L);
+
+				// int lhs = current.get(Calendar.DATE);
+
+				// actual.add(Calendar.DATE, -1);
+
+				// int rhs = actual.get(Calendar.DATE);
+
+				// if(lhs == rhs) {
+
+				values.add(new TrendData(closeValues[closeValues.length - count],
+						timestamps[timestamps.length - count] * 1000L, volumes[volumes.length - count]));
+
+				count--;
+				// }
+			}
 		}
-		
+
 		return values;
 	}
 

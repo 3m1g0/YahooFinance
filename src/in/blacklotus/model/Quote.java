@@ -10,7 +10,7 @@ public class Quote {
 	
 	private Double[] close;
 	
-	private Double[] volume;
+	private Long[] volume;
 	
 	public Quote() {
 	}
@@ -47,11 +47,11 @@ public class Quote {
 		this.close = close;
 	}
 
-	public Double[] getVolume() {
+	public Long[] getVolume() {
 		return volume;
 	}
 
-	public void setVolume(Double[] volume) {
+	public void setVolume(Long[] volume) {
 		this.volume = volume;
 	}	
 }

@@ -17,7 +17,7 @@ public class Stock {
 
 	private double now;
 	
-	private double volume;
+	private Long volume;
 
 	private double low;
 
@@ -46,6 +46,10 @@ public class Stock {
 		String pattern = "MM/dd/yyyy";
 
 		sdf = new SimpleDateFormat(pattern);
+	}
+	
+	public Stock(String symbol) {
+		this.symbol = symbol;
 	}
 
 	public void calculateHighPercenttage() {
@@ -96,11 +100,11 @@ public class Stock {
 		this.now = close;
 	}
 
-	public double getVolume() {
+	public long getVolume() {
 		return volume;
 	}
 
-	public void setVolume(double volume) {
+	public void setVolume(long volume) {
 		this.volume = volume;
 	}
 
@@ -387,6 +391,11 @@ public class Stock {
 	}
 
 	public String toPrintableString(int index) {
+		
+		if(name == null) {
+			
+			return String.format("%d,-,-,-,-,-,-,-,-,-,-,-", index);
+		}
 
 		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", index, this.symbol, round(this.now), round(this.low),
 				round(this.high), getPrintableData(round(this.nowPercent)), getPrintableData(round(this.lowPercent)),

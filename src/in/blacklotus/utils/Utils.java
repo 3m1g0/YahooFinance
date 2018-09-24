@@ -8,8 +8,10 @@ import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.awt.TrayIcon.MessageType;
 import java.net.MalformedURLException;
+import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -149,6 +151,26 @@ public class Utils {
 				}
 			}
 		});
+	}
+	
+	public static double round(double value) {
+		return Math.round(value * 100.0) / 100.0;
+	}
+	
+	public static String formattedNumber(long number) {
+		return NumberFormat.getNumberInstance(Locale.US).format(number);
+	}
+	
+	public static String formattedVolume(long volume) {
+		
+		if(volume > 999999) {
+		
+			return NumberFormat.getNumberInstance(Locale.US).format(round(volume * 1.00 / 1000000)) + "M";
+		
+		} else {
+		
+			return NumberFormat.getNumberInstance(Locale.US).format(volume);
+		}
 	}
 
 }
