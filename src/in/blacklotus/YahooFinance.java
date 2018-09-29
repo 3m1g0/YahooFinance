@@ -24,7 +24,7 @@ import in.blacklotus.api.YahooFinanceAPI;
 import in.blacklotus.model.Metadata;
 import in.blacklotus.model.Stock;
 import in.blacklotus.model.Symbol;
-import in.blacklotus.model.Trend;
+import in.blacklotus.model.PriceTrend;
 import in.blacklotus.model.TrendData;
 import in.blacklotus.model.YahooResponse;
 import in.blacklotus.utils.NetworkUtils;
@@ -47,6 +47,8 @@ public class YahooFinance {
 	private static String REPEAT = null;
 
 	private static String TREND = null;
+
+	private static int TREND_COUNT = 3;
 
 	private static int repeat = -1;
 
@@ -71,13 +73,13 @@ public class YahooFinance {
 
 	private static int percentage = 0;
 
+	private static ArrayList<String> errorList = new ArrayList<>();
+
 	public static void main(String[] args) {
 
 		final List<Symbol> symbolList = new ArrayList<>();
 
 		parseArguments(args);
-
-		System.out.println(new Date(1537277520 * 1000L));
 
 		System.out.println(
 				"--------------------------------------------------------------------------------------------------------");
@@ -114,6 +116,10 @@ public class YahooFinance {
 		if (params.containsKey("trend")) {
 
 			TREND = params.get("trend").get(0);
+
+			TREND_COUNT = NO_VALUES;
+
+			NO_VALUES = 20;
 		}
 
 		if (params.containsKey("repeat")) {
@@ -207,6 +213,11 @@ public class YahooFinance {
 
 			processData(symbolList);
 		}
+
+		if (!errorList.isEmpty()) {
+
+			writeErrorsToFile();
+		}
 	}
 
 	private static void processData(List<Symbol> symbolList) {
@@ -231,14 +242,23 @@ public class YahooFinance {
 
 			Symbol symbol = symbolList.get(i);
 
-			Stock stockDetail = getStockDetails(symbol.getName());
+			try {
+				Stock stockDetail = getStockDetails(symbol.getName());
 
-			if (stockDetail != null) {
+				if (stockDetail != null) {
 
-				if (stockDetail.applyFilter(FILTER)) {
+					if (stockDetail.applyFilter(FILTER)) {
 
-					stocksList.add(stockDetail);
+						stocksList.add(stockDetail);
+					}
 				}
+			} catch (Exception e) {
+
+				errorList.add("============================================================================");
+				errorList.add(symbol.getName());
+				errorList.add("============================================================================");
+				errorList.add(e.getMessage());
+				errorList.add("============================================================================");
 			}
 
 			percentage = (i + 1) * 100 / symbolList.size();
@@ -329,16 +349,25 @@ public class YahooFinance {
 
 			Symbol symbol = symbolList.get(i);
 
-			Stock stockDetail = getStockDetails(symbol.getName());
+			try {
+				Stock stockDetail = getStockDetails(symbol.getName());
 
-			if (stockDetail != null) {
+				if (stockDetail != null) {
 
-				if (stockDetail.applyRepeatFilter(symbol)) {
+					if (stockDetail.applyRepeatFilter(symbol)) {
 
-					symbol.setNow(stockDetail.getNow());
+						symbol.setNow(stockDetail.getNow());
 
-					processedSymbolList.add(symbol);
+						processedSymbolList.add(symbol);
+					}
 				}
+			} catch (Exception e) {
+
+				errorList.add("============================================================================");
+				errorList.add(symbol.getName());
+				errorList.add("============================================================================");
+				errorList.add(e.getMessage());
+				errorList.add("============================================================================");
 			}
 
 			percentage = (i + 1) * 100 / symbolList.size();
@@ -366,7 +395,7 @@ public class YahooFinance {
 
 	private static void processTrendData(List<Symbol> symbolList) {
 
-		List<Trend> processedTrendList = new ArrayList<>();
+		List<PriceTrend> processedTrendList = new ArrayList<>();
 
 		refreshing = false;
 
@@ -386,14 +415,23 @@ public class YahooFinance {
 
 			Symbol symbol = symbolList.get(i);
 
-			Trend trendDetail = getTrendDetails(symbol.getName());
+			try {
+				PriceTrend trendDetail = getTrendDetails(symbol.getName());
 
-			if (trendDetail != null) {
+				if (trendDetail != null) {
 
-				if (trendDetail.isValidTrend()) {
+					if (trendDetail.isValidTrend(TREND_COUNT)) {
 
-					processedTrendList.add(trendDetail);
+						processedTrendList.add(trendDetail);
+					}
 				}
+			} catch (Exception e) {
+
+				errorList.add("============================================================================");
+				errorList.add(symbol.getName());
+				errorList.add("============================================================================");
+				errorList.add(e.getMessage());
+				errorList.add("============================================================================");
 			}
 
 			percentage = (i + 1) * 100 / symbolList.size();
@@ -401,8 +439,8 @@ public class YahooFinance {
 
 		processing = false;
 
-		String[] headers = new String[] { "#", "SYMBOL", "NOW", TREND.toUpperCase() + "TREND", "$CHANGE", "%$CHANGE",
-				"VOLUME", "%VOLCHANGE" };
+		String[] headers = new String[] { "#", "SYMBOL", "LOW20", "HIGH20", TREND.toUpperCase() + "TREND", "$CHANGE",
+				"%$CHANGE", "VOLUME", "%VOLCHANGE" };
 
 		List<String[]> tmp = new ArrayList<>();
 
@@ -422,6 +460,8 @@ public class YahooFinance {
 		}
 
 		System.out.println(FlipTableConverters.fromObjects(headers, data));
+
+		writeTrendsToFile(headers, processedTrendList);
 	}
 
 	private static Stock getStockDetails(String stockName) {
@@ -449,6 +489,8 @@ public class YahooFinance {
 			Response<ResponseBody> execute = data.execute();
 
 			if (execute.code() != 200) {
+
+				errorList.add(stockName + " ---> No data found, symbol may be delisted");
 
 				return new Stock(stockName);
 			}
@@ -525,9 +567,9 @@ public class YahooFinance {
 		return stock;
 	}
 
-	private static Trend getTrendDetails(String stockName) {
+	private static PriceTrend getTrendDetails(String stockName) {
 
-		Trend trend = new Trend();
+		PriceTrend trend = new PriceTrend();
 
 		Double[] closeValues;
 
@@ -551,9 +593,11 @@ public class YahooFinance {
 
 			if (execute.code() != 200) {
 
-				return new Trend();
+				errorList.add(stockName + " ---> No data found, symbol may be delisted");
+
+				return new PriceTrend(stockName);
 			}
-			
+
 			String responseString = execute.body().string();
 
 			YahooResponse yahooResponse = new Gson().fromJson(responseString, YahooResponse.class);
@@ -620,7 +664,8 @@ public class YahooFinance {
 
 			trend.setLowDate(new Date(timestamps[lowIndex] * 1000L));
 
-			trend.setTrend(getTrend(closeValues, timestamps, volumes));
+			trend.setTrend(getTrend(closeValues, trend.getLow(), trend.getLowDate(), trend.getHigh(),
+					trend.getHighDate(), timestamps, volumes));
 
 		} catch (IOException e) {
 
@@ -761,7 +806,7 @@ public class YahooFinance {
 
 			generateOutputDir();
 
-			generateOutputFile();
+			generateOutputFile("20Day_");
 
 			File file = new File(outputDir, outputFileName);
 
@@ -779,6 +824,84 @@ public class YahooFinance {
 				Stock stock = stocks.get(i);
 
 				writer.println(stock.toPrintableString(i + 1));
+			}
+
+			writer.close();
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+	}
+
+	private static void writeTrendsToFile(String[] headers, List<PriceTrend> stocks) {
+
+		try {
+
+			generateOutputDir();
+
+			generateOutputFile("pricetrends");
+
+			File file = new File(outputDir, outputFileName);
+
+			if (!file.exists()) {
+
+				file.createNewFile();
+			}
+
+			PrintWriter writer = new PrintWriter(new FileWriter(file));
+
+			String header = "";
+
+			for (int i = 0; i < headers.length - 1; i++) {
+
+				header += headers[i] + ",";
+			}
+
+			header += headers[headers.length - 1];
+
+			writer.println(header);
+
+			for (int i = 0; i < stocks.size(); i++) {
+
+				for (int j = 0; j < stocks.get(i).toPrintableStrings(i + 1).length; j++) {
+
+					String tmp = stocks.get(i).toPrintableStrings(i + 1)[j];
+
+					tmp = tmp.replaceAll(",", "");
+
+					writer.println(tmp.replaceAll("_", ","));
+				}
+			}
+
+			writer.close();
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+	}
+
+	private static void writeErrorsToFile() {
+
+		try {
+
+			generateOutputDir();
+
+			generateOutputFile("errors_");
+
+			File file = new File(outputDir, outputFileName);
+
+			if (!file.exists()) {
+
+				file.createNewFile();
+			}
+
+			PrintWriter writer = new PrintWriter(new FileWriter(file));
+
+			for (int i = 0; i < errorList.size(); i++) {
+
+				writer.println(errorList.get(i));
 			}
 
 			writer.close();
@@ -851,36 +974,26 @@ public class YahooFinance {
 		return min;
 	}
 
-	private static List<TrendData> getTrend(Double closeValues[], long timestamps[], Long volumes[]) {
+	private static List<TrendData> getTrend(Double closeValues[], Double low20, Date lowDate, Double high20,
+			Date highDate, long timestamps[], Long volumes[]) {
 
 		ArrayList<TrendData> values = new ArrayList<>();
 
-		// Calendar current = Calendar.getInstance();
+		int count = 0;
 
-		// Calendar actual = Calendar.getInstance();
+		if (closeValues.length >= TREND_COUNT) {
 
-		int count = NO_VALUES;
+			while (count < 10) {
 
-		if (closeValues.length >= NO_VALUES) {
+				if (closeValues.length <= count) {
 
-			while (count > 0) {
+					break;
+				}
 
-				// current.setTimeInMillis(timestamps[timestamps.length - count
-				// - 1] * 1000L);
+				values.add(new TrendData(closeValues[closeValues.length - count - 1], low20, lowDate, high20, highDate,
+						timestamps[timestamps.length - count - 1] * 1000L, volumes[volumes.length - count - 1]));
 
-				// int lhs = current.get(Calendar.DATE);
-
-				// actual.add(Calendar.DATE, -1);
-
-				// int rhs = actual.get(Calendar.DATE);
-
-				// if(lhs == rhs) {
-
-				values.add(new TrendData(closeValues[closeValues.length - count],
-						timestamps[timestamps.length - count] * 1000L, volumes[volumes.length - count]));
-
-				count--;
-				// }
+				count++;
 			}
 		}
 
@@ -901,11 +1014,11 @@ public class YahooFinance {
 		}
 	}
 
-	private static void generateOutputFile() {
+	private static void generateOutputFile(String type) {
 
 		SimpleDateFormat sdf = new SimpleDateFormat("MMMM_dd_yyyy_hh_mm_aaa");
 
-		outputFileName = "20Day_" + sdf.format(new Date()) + ".csv";
+		outputFileName = type + sdf.format(new Date()) + ".csv";
 
 		File outputFile = new File(outputDir, outputFileName);
 

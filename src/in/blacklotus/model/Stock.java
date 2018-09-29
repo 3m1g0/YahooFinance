@@ -394,7 +394,7 @@ public class Stock {
 		
 		if(name == null) {
 			
-			return String.format("%d,-,-,-,-,-,-,-,-,-,-,-", index);
+			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-", index, symbol);
 		}
 
 		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", index, this.symbol, round(this.now), round(this.low),
