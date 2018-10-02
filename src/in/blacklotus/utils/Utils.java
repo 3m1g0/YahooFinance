@@ -39,10 +39,10 @@ import com.google.gson.Gson;
 import in.blacklotus.YahooFinanceApp;
 import in.blacklotus.api.YahooFinanceAPI;
 import in.blacklotus.model.Metadata;
+import in.blacklotus.model.PriceTrend;
+import in.blacklotus.model.PriceTrendData;
 import in.blacklotus.model.Stock;
 import in.blacklotus.model.Symbol;
-import in.blacklotus.model.PriceTrend;
-import in.blacklotus.model.TrendData;
 import in.blacklotus.model.YahooResponse;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -59,42 +59,42 @@ public class Utils {
 	public static String toDuration(long duration) {
 
 		long seconds = duration / 1000;
-		
+
 		long minutes = seconds / 60;
-		
+
 		long hours = minutes / 60;
-		
+
 		long days = hours / 24;
-		
+
 		hours = hours % 24;
-		
+
 		minutes = minutes % 60;
-		
+
 		seconds = seconds % 60;
-		
+
 		StringBuffer sb = new StringBuffer();
-		
-		if(days > 0) {
-		
+
+		if (days > 0) {
+
 			sb.append(days).append(days == 1 ? " day " : " days ");
-		} 
-		
-		if(hours > 0) {
-		
+		}
+
+		if (hours > 0) {
+
 			sb.append(hours).append(hours == 1 ? " hour " : " hours ");
 		}
-		
-		if(minutes > 0) {
-			
+
+		if (minutes > 0) {
+
 			sb.append(minutes).append(minutes == 1 ? " minute " : " minutes ");
 		}
-		
-		if(seconds > 0) {
-			
+
+		if (seconds > 0) {
+
 			sb.append(seconds).append(seconds == 1 ? " second " : " seconds ");
 		}
-		
-		return sb.toString(); 
+
+		return sb.toString();
 	}
 
 	public static void sendEmail(String body) {
@@ -175,29 +175,29 @@ public class Utils {
 			}
 		});
 	}
-	
+
 	public static double round(double value) {
 		return Math.round(value * 100.0) / 100.0;
 	}
-	
+
 	public static String formattedNumber(long number) {
 		return NumberFormat.getNumberInstance(Locale.US).format(number);
 	}
-	
+
 	public static String formattedVolume(long volume) {
-		
-		if(volume > 999999) {
-		
+
+		if (Math.abs(volume) > 999999) {
+
 			return NumberFormat.getNumberInstance(Locale.US).format(round(volume * 1.00 / 1000000)) + "M";
-		
+
 		} else {
-		
+
 			return NumberFormat.getNumberInstance(Locale.US).format(volume);
 		}
 	}
-	
+
 	public static Map<String, List<String>> parseArguments(String args[]) {
-		
+
 		Map<String, List<String>> params = new HashMap<>();
 
 		List<String> options = null;
@@ -216,13 +216,13 @@ public class Utils {
 				}
 
 				options = new ArrayList<>();
-				
+
 				params.put(a.substring(1), options);
 
 			} else if (options != null) {
 
 				options.add(a);
-				
+
 			} else {
 
 				System.err.println("Illegal parameter usage");
@@ -230,7 +230,7 @@ public class Utils {
 				return params;
 			}
 		}
-		
+
 		return params;
 	}
 
@@ -245,7 +245,7 @@ public class Utils {
 
 		return false;
 	}
-	
+
 	public static List<Symbol> readInput(String INPUT_FILE_NAME) {
 
 		File inputFile = new File(INPUT_FILE_NAME);
@@ -307,7 +307,7 @@ public class Utils {
 
 		return inputList;
 	}
-	
+
 	public static Stock getStockDetails(String stockName, int NO_VALUES, List<String> errorList) {
 
 		Stock stock = new Stock();
@@ -377,6 +377,13 @@ public class Utils {
 							/ closeValues[closeValues.length - 2];
 
 			stock.setNowPercent(nowPercent);
+			
+			double volumeChangePercent = (NO_VALUES < 2 || volumes.length < 2 || volumes[closeValues.length - 2] == null)
+					? -9999
+					: (stock.getVolume() - volumes[volumes.length - 2]) * 100
+							/ volumes[volumes.length - 2];
+			
+			stock.setVolumeChangePercent(volumeChangePercent);
 
 			int highIndex = getHighIndex(highValues, NO_VALUES);
 
@@ -390,8 +397,6 @@ public class Utils {
 
 			stock.calculateLowPercenttage();
 
-			stock.calculateDiffer();
-
 			stock.calculateMove();
 
 			stock.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
@@ -404,11 +409,12 @@ public class Utils {
 
 			e.printStackTrace();
 		}
-		
+
 		return stock;
 	}
-	
-	public static PriceTrend getTrendDetails(String stockName, int NO_VALUES, String TREND, int TREND_COUNT, List<String> errorList) {
+
+	public static PriceTrend getTrendDetails(String stockName, int NO_VALUES, String TREND, int TREND_COUNT,
+			String TREND_TYPE, List<String> errorList) {
 
 		PriceTrend trend = new PriceTrend();
 
@@ -483,6 +489,12 @@ public class Utils {
 
 			trend.setNowPercent(nowPercent);
 
+			double volumeChangePercent = (NO_VALUES < 2 || volumes.length < 2
+					|| volumes[closeValues.length - 2] == null) ? -9999
+							: (trend.getVolume() - volumes[volumes.length - 2]) * 100 / volumes[volumes.length - 2];
+
+			trend.setVolumeChangePercent(volumeChangePercent);
+
 			int highIndex = getHighIndex(highValues, NO_VALUES);
 
 			trend.setHigh(highValues[highIndex]);
@@ -495,8 +507,6 @@ public class Utils {
 
 			trend.calculateLowPercenttage();
 
-			trend.calculateDiffer();
-
 			trend.calculateMove();
 
 			trend.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
@@ -505,8 +515,12 @@ public class Utils {
 
 			trend.setLowDate(new Date(timestamps[lowIndex] * 1000L));
 
-			trend.setTrend(getTrend(closeValues, trend.getLow(), trend.getLowDate(), trend.getHigh(),
-					trend.getHighDate(), timestamps, volumes, TREND_COUNT));
+			if (TREND_TYPE.equalsIgnoreCase("PRICE")) {
+
+				trend.setTrend(getTrend(closeValues, trend.getLow(), trend.getLowDate(), trend.getHigh(),
+						trend.getHighDate(), timestamps, volumes, TREND_COUNT));
+
+			}
 
 		} catch (IOException e) {
 
@@ -515,8 +529,8 @@ public class Utils {
 
 		return trend;
 	}
-	
-	private static int getHighIndex(Double[] data, int NO_VALUES) {
+
+	public static int getHighIndex(Double[] data, int NO_VALUES) {
 
 		long count = 0;
 
@@ -547,7 +561,7 @@ public class Utils {
 		return max;
 	}
 
-	private static int getLowIndex(Double[] data, int NO_VALUES) {
+	public static int getLowIndex(Double[] data, int NO_VALUES) {
 
 		int count = 0;
 
@@ -577,7 +591,7 @@ public class Utils {
 
 		return min;
 	}
-	
+
 	public static File generateOutputDir() {
 
 		SimpleDateFormat sdf = new SimpleDateFormat("MMMM_dd_yyyy");
@@ -590,14 +604,14 @@ public class Utils {
 
 			dir.mkdir();
 		}
-		
+
 		return dir;
 	}
 
-	public static List<TrendData> getTrend(Double closeValues[], Double low20, Date lowDate, Double high20,
+	public static List<PriceTrendData> getTrend(Double closeValues[], Double low20, Date lowDate, Double high20,
 			Date highDate, long timestamps[], Long volumes[], int TREND_COUNT) {
 
-		ArrayList<TrendData> values = new ArrayList<>();
+		ArrayList<PriceTrendData> values = new ArrayList<>();
 
 		int count = 0;
 
@@ -610,8 +624,9 @@ public class Utils {
 					break;
 				}
 
-				values.add(new TrendData(closeValues[closeValues.length - count - 1], low20, lowDate, high20, highDate,
-						timestamps[timestamps.length - count - 1] * 1000L, volumes[volumes.length - count - 1]));
+				values.add(new PriceTrendData(closeValues[closeValues.length - count - 1], low20, lowDate, high20,
+						highDate, timestamps[timestamps.length - count - 1] * 1000L,
+						volumes[volumes.length - count - 1]));
 
 				count++;
 			}
@@ -619,7 +634,7 @@ public class Utils {
 
 		return values;
 	}
-	
+
 	public static File generateOutputFile(String type, File outputDir) {
 
 		SimpleDateFormat sdf = new SimpleDateFormat("MMMM_dd_yyyy_hh_mm_aaa");
@@ -639,10 +654,10 @@ public class Utils {
 				e.printStackTrace();
 			}
 		}
-		
+
 		return outputFile;
 	}
-	
+
 	public static void writeErrorsToFile(ArrayList<String> errorList) {
 
 		try {

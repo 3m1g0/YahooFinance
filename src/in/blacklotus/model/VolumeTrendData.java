@@ -3,7 +3,11 @@ package in.blacklotus.model;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class TrendData {
+import com.google.gson.Gson;
+
+import in.blacklotus.utils.Utils;
+
+public class VolumeTrendData {
 
 	private Double value;
 	
@@ -23,7 +27,7 @@ public class TrendData {
 	
 	private Double priceDiffPercent;
 	
-	private Double volumeDiff;
+	private Long volumeDiff;
 	
 	private Double volumeDiffPercentage;
 	
@@ -31,7 +35,7 @@ public class TrendData {
 
 	private SimpleDateFormat sdf;
 
-	public TrendData(Double value, Double low20, Date lowDate, Double high20, Date highDate, long timestamp, long volume) {
+	public VolumeTrendData(Double value, Double low20, Date lowDate, Double high20, Date highDate, long timestamp, long volume) {
 
 		this.value = value;
 		
@@ -124,11 +128,11 @@ public class TrendData {
 		this.priceDiffPercent = priceDiffPercent;
 	}
 
-	public Double getVolumeDiff() {
+	public Long getVolumeDiff() {
 		return volumeDiff;
 	}
 
-	public void setVolumeDiff(Double volumeDiff) {
+	public void setVolumeDiff(Long volumeDiff) {
 		this.volumeDiff = volumeDiff;
 	}
 
@@ -162,10 +166,63 @@ public class TrendData {
 
 		return String.format("%s: %s", sdf.format(this.highDate), round(this.high20));
 	}
+	
+	public String toPrintablePriceChange() {
+
+		if (priceDiff == Double.MIN_VALUE) {
+
+			return "-";
+
+		} else {
+
+			return String.format("%.2f", priceDiff);
+		}
+	}
+	
+	public String toPrintablePriceChangePercent() {
+
+		if (priceDiffPercent == Double.MIN_VALUE) {
+
+			return "-";
+
+		} else {
+
+			return String.format("%%%.2f", priceDiffPercent);
+		}
+	}
+	
+	public String toPrintableVolumeChange() {
+
+		if (volumeDiff == Long.MIN_VALUE) {
+
+			return "-";
+
+		} else {
+
+			return Utils.formattedVolume(volumeDiff);
+		}
+	}
+	
+	public String toPrintableVolumeChangePercent() {
+
+		if (volumeDiffPercentage == Double.MIN_VALUE) {
+
+			return "-";
+
+		} else {
+
+			return String.format("%%%.2f", volumeDiffPercentage);
+		}
+	}
 
 	private double round(double value) {
 		
 		return Math.round(value * 100.0) / 100.0;
 	}
 
+	@Override
+	public String toString() {
+
+		return new Gson().toJson(this);
+	}
 }

@@ -35,7 +35,7 @@ public class Stock {
 
 	private Date lowDate;
 
-	private double differ;
+	private double volumeChangePercent;
 
 	private double move;
 
@@ -58,10 +58,6 @@ public class Stock {
 
 	public void calculateLowPercenttage() {
 		this.lowPercent = (this.now - this.low) / this.low * 100;
-	}
-
-	public void calculateDiffer() {
-		this.differ = (this.high - this.now) / this.high * 100;
 	}
 
 	public void calculateMove() {
@@ -172,12 +168,12 @@ public class Stock {
 		this.lowDate = lowDate;
 	}
 
-	public double getDiffer() {
-		return differ;
+	public double getVolumeChangePercent() {
+		return volumeChangePercent;
 	}
 
-	public void setDiffer(double differ) {
-		this.differ = differ;
+	public void setVolumeChangePercent(double differ) {
+		this.volumeChangePercent = differ;
 	}
 
 	public double getMove() {
@@ -381,7 +377,7 @@ public class Stock {
 
 		} else if (KEYS[7].equals(key)) {
 
-			return getDiffer();
+			return getVolumeChangePercent();
 
 		} else {
 
@@ -389,28 +385,54 @@ public class Stock {
 		}
 
 	}
+	
+	public int rank(double value) {
+		
+		Double diffPercent = Math.abs(value);
+
+		if (diffPercent > 150) {
+
+			return 1;
+
+		} else if (diffPercent > 100 && diffPercent <= 150) {
+
+			return 2;
+
+		} else if (diffPercent > 70 && diffPercent <= 100) {
+
+			return 3;
+
+		} else if (diffPercent > 40 && diffPercent <= 70) {
+
+			return 4;
+
+		} else {
+
+			return 5;
+		}
+	}
 
 	public String toPrintableString(int index) {
 		
 		if(name == null) {
 			
-			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-", index, symbol);
+			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
 		}
 
-		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", index, this.symbol, round(this.now), round(this.low),
+		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", index, this.symbol, round(this.now), round(this.low),
 				round(this.high), getPrintableData(round(this.nowPercent)), getPrintableData(round(this.lowPercent)),
 				getPrintableData(round(this.highPercent)), sdf.format(this.lowDate), sdf.format(this.highDate),
-				getPrintableData(round(this.move)), getPrintableData(round(this.differ)));
+				getPrintableData(round(this.move)), getPrintableData(round(this.volumeChangePercent)), rank(this.volumeChangePercent));
 
 	}
 
 	@Override
 	public String toString() {
 
-		return String.format("%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%s,%s,%.2f,%.2f", this.symbol, round(this.now),
+		return String.format("%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%s,%s,%.2f,%.2f,%.2f", this.symbol, round(this.now),
 				round(this.low), round(this.high), round(this.nowPercent), round(this.lowPercent),
 				round(this.highPercent), sdf.format(this.lowDate), sdf.format(this.highDate), round(this.move),
-				round(this.differ));
+				round(this.volumeChangePercent), rank(this.volumeChangePercent));
 
 	}
 

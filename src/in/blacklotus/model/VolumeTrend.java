@@ -2,6 +2,8 @@ package in.blacklotus.model;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import in.blacklotus.utils.Utils;
@@ -10,7 +12,7 @@ public class VolumeTrend extends Stock {
 
 	private String type;
 
-	private List<TrendData> trends;
+	private List<VolumeTrendData> trends;
 
 	public VolumeTrend() {
 
@@ -31,11 +33,11 @@ public class VolumeTrend extends Stock {
 		this.type = type;
 	}
 
-	public List<TrendData> getTrend() {
+	public List<VolumeTrendData> getTrend() {
 		return trends;
 	}
 
-	public void setTrend(List<TrendData> trends) {
+	public void setTrend(List<VolumeTrendData> trends) {
 		this.trends = trends;
 	}
 
@@ -53,6 +55,20 @@ public class VolumeTrend extends Stock {
 		return false;
 	}
 
+	public boolean isValidVolumeTrend(int count) {
+
+		if ("UP".equalsIgnoreCase(this.type)) {
+
+			return this.isVolumeUptrend(count);
+
+		} else if ("DOWN".equalsIgnoreCase(this.type)) {
+
+			return this.isVolumeDowntrend(count);
+		}
+
+		return false;
+	}
+
 	private boolean isUptrend(int count) {
 
 		if (this.trends.size() < count) {
@@ -60,13 +76,13 @@ public class VolumeTrend extends Stock {
 			return false;
 		}
 
-		List<TrendData> temp = new ArrayList<>();
+		List<VolumeTrendData> temp = new ArrayList<>();
 
 		for (int i = 1; i < this.trends.size(); i++) {
 
-			TrendData trendData = this.trends.get(i);
+			VolumeTrendData VolumeTrendData = this.trends.get(i);
 
-			if (trendData.getVolume() >= this.trends.get(i - 1).getVolume()) {
+			if (VolumeTrendData.getValue() >= this.trends.get(i - 1).getValue()) {
 
 				if (i < count) {
 
@@ -79,7 +95,7 @@ public class VolumeTrend extends Stock {
 
 			} else {
 
-				temp.add(trendData);
+				temp.add(VolumeTrendData);
 			}
 		}
 
@@ -97,13 +113,13 @@ public class VolumeTrend extends Stock {
 			return false;
 		}
 
-		List<TrendData> temp = new ArrayList<>();
+		List<VolumeTrendData> temp = new ArrayList<>();
 
 		for (int i = 1; i < this.trends.size(); i++) {
 
-			TrendData trendData = this.trends.get(i);
+			VolumeTrendData VolumeTrendData = this.trends.get(i);
 
-			if (trendData.getVolume() <= this.trends.get(i - 1).getVolume()) {
+			if (VolumeTrendData.getValue() <= this.trends.get(i - 1).getValue()) {
 
 				if (i < count) {
 
@@ -116,7 +132,7 @@ public class VolumeTrend extends Stock {
 
 			} else {
 
-				temp.add(trendData);
+				temp.add(VolumeTrendData);
 			}
 		}
 
@@ -127,82 +143,223 @@ public class VolumeTrend extends Stock {
 		return true;
 	}
 
-	private String getChangeForIndex(int index) {
+	private boolean isVolumeUptrend(int count) {
 
-		if (index == trends.size() - 1) {
+		if (this.trends.size() < count) {
 
-			return "-";
-		} else {
+			return false;
+		}
 
-			return String.format("%.2f", (this.trends.get(index).getValue() - this.trends.get(index + 1).getValue()));
+		List<VolumeTrendData> temp = new ArrayList<>();
+
+		for (int i = 1; i < this.trends.size(); i++) {
+
+			VolumeTrendData VolumeTrendData = this.trends.get(i);
+
+			if (VolumeTrendData.getVolume() >= this.trends.get(i - 1).getVolume()) {
+
+				if (i < count) {
+
+					return false;
+
+				} else {
+
+					break;
+				}
+
+			} else {
+
+				temp.add(VolumeTrendData);
+			}
+		}
+
+		temp.add(0, this.trends.get(0));
+
+		this.trends = temp;
+
+		return true;
+	}
+
+	private boolean isVolumeDowntrend(int count) {
+
+		if (this.trends.size() < count) {
+
+			return false;
+		}
+
+		List<VolumeTrendData> temp = new ArrayList<>();
+
+		for (int i = 1; i < this.trends.size(); i++) {
+
+			VolumeTrendData VolumeTrendData = this.trends.get(i);
+
+			if (VolumeTrendData.getVolume() <= this.trends.get(i - 1).getVolume()) {
+
+				if (i < count) {
+
+					return false;
+
+				} else {
+
+					break;
+				}
+
+			} else {
+
+				temp.add(VolumeTrendData);
+			}
+		}
+
+		temp.add(0, this.trends.get(0));
+
+		this.trends = temp;
+
+		return true;
+	}
+
+	public void sortByRank() {
+
+		Collections.sort(this.trends, new Comparator<VolumeTrendData>() {
+
+			@Override
+			public int compare(VolumeTrendData s1, VolumeTrendData s2) {
+
+				return -Double.compare(Math.abs(s1.getVolumeDiffPercentage()), Math.abs(s2.getVolumeDiffPercentage()));
+			}
+		});
+
+	}
+
+	public void assignData() {
+
+		for (int i = 0; i < this.trends.size(); i++) {
+
+			this.trends.get(i).setPriceDiff(this.getPriceChangeForIndex(i));
+
+			this.trends.get(i).setPriceDiffPercent(this.getPercentagePriceChangeForIndex(i));
+
+			this.trends.get(i).setVolumeDiff(this.getVolumeChangeForIndex(i));
+
+			this.trends.get(i).setVolumeDiffPercentage(this.getPercentageVolumeChangeForIndex(i));
+
+			this.trends.get(i).setRank(this.getRankForVolumePercentDiff(this.trends.get(i).getVolumeDiffPercentage()));
 		}
 	}
 
-	private String getPercentageChangeForIndex(int index) {
+	private Double getPriceChangeForIndex(int index) {
 
 		if (index == trends.size() - 1) {
 
-			return "-";
+			return Double.MIN_VALUE;
+
 		} else {
 
-			return String.format("%%%.2f",
-					Math.abs((this.trends.get(index).getValue() - this.trends.get(index + 1).getValue()) * 100.00
-							/ this.trends.get(index + 1).getValue()));
+			return this.trends.get(index).getValue() - this.trends.get(index + 1).getValue();
 		}
 	}
 
-	private String getVolumeChangeForIndex(int index) {
+	private Double getPercentagePriceChangeForIndex(int index) {
 
 		if (index == trends.size() - 1) {
 
-			return "-";
+			return Double.MIN_VALUE;
+
 		} else {
 
-			return String.format("%.2f", (this.trends.get(index).getVolume() - this.trends.get(index + 1).getVolume()));
+			return (this.trends.get(index).getValue() - this.trends.get(index + 1).getValue()) * 100.00
+					/ this.trends.get(index + 1).getValue();
 		}
 	}
 
-	private String getParcentageVolChangeForIndex(int index) {
+	private Long getVolumeChangeForIndex(int index) {
 
 		if (index == trends.size() - 1) {
 
-			return "-";
+			return Long.MIN_VALUE;
+
 		} else {
 
-			return String.format("%%%.2f",
-					((this.trends.get(index).getVolume() - this.trends.get(index + 1).getVolume()) * 100.00
-							/ this.trends.get(index + 1).getVolume()));
+			return this.trends.get(index).getVolume() - this.trends.get(index + 1).getVolume();
 		}
 	}
 
-	public String[] toPrintableVolumeStrings(int index) {
+	private Double getPercentageVolumeChangeForIndex(int index) {
 
-		String[] printableTrends = new String[this.trends.size() + 1];
+		if (index == trends.size() - 1) {
+
+			return Double.MIN_VALUE;
+
+		} else {
+
+			return (this.trends.get(index).getVolume() - this.trends.get(index + 1).getVolume()) * 100.00
+					/ this.trends.get(index + 1).getVolume();
+		}
+	}
+
+	private int getRankForVolumePercentDiff(Double value) {
+
+		Double diffPercent = Math.abs(value);
+
+		if (diffPercent > 150) {
+
+			return 1;
+
+		} else if (diffPercent > 100 && diffPercent <= 150) {
+
+			return 2;
+
+		} else if (diffPercent > 70 && diffPercent <= 100) {
+
+			return 3;
+
+		} else if (diffPercent > 40 && diffPercent <= 70) {
+
+			return 4;
+
+		} else {
+
+			return 5;
+		}
+	}
+
+	public String[] toPrintableStrings(int index, double threshold) {
+
+		List<String> printableTrendsList = new ArrayList<>();
 
 		for (int i = 0; i < this.trends.size(); i++) {
 
 			String tmp;
 
-			if (i == 0) {
+			if (Math.abs(getPercentageVolumeChangeForIndex(i)) >= threshold) {
 
-				tmp = String.format("%d_%s_%s_%s_%s_%s_%s_%s", index, this.getSymbol(), this.trends.get(i).getValue(),
-						this.getChangeForIndex(i), getPercentageChangeForIndex(i),
-						Utils.formattedVolume(this.trends.get(i).getVolume()), getVolumeChangeForIndex(i),
-						getParcentageVolChangeForIndex(i));
-			} else {
+				if (printableTrendsList.isEmpty()) {
 
-				tmp = String.format("%s_%s_%s_%s_%s_%s_%s_%s", " ", " ", this.trends.get(i).getValue(),
-						this.getChangeForIndex(i), getPercentageChangeForIndex(i),
-						Utils.formattedVolume(this.trends.get(i).getVolume()), getVolumeChangeForIndex(i),
-						getParcentageVolChangeForIndex(i));
+					tmp = String.format("%d_%s_%s_%s_%s_%s_%s_%s_%d", index, this.getSymbol(),
+							this.trends.get(i).toPrintableString(), this.trends.get(i).toPrintablePriceChange(),
+							this.trends.get(i).toPrintablePriceChangePercent(),
+							Utils.formattedVolume(this.trends.get(i).getVolume()),
+							this.trends.get(i).toPrintableVolumeChange(),
+							this.trends.get(i).toPrintableVolumeChangePercent(), this.trends.get(i).getRank());
+				} else {
+
+					tmp = String.format("%s_%s_%s_%s_%s_%s_%s_%s_%d", " ", " ", this.trends.get(i).toPrintableString(),
+							this.trends.get(i).toPrintablePriceChange(),
+							this.trends.get(i).toPrintablePriceChangePercent(),
+							Utils.formattedVolume(this.trends.get(i).getVolume()),
+							this.trends.get(i).toPrintableVolumeChange(),
+							this.trends.get(i).toPrintableVolumeChangePercent(), this.trends.get(i).getRank());
+				}
+
+				printableTrendsList.add(tmp);
 			}
-
-			printableTrends[i] = tmp;
 		}
 
-		printableTrends[this.trends.size()] = String.format("%s_%s_%s_%s_%s_%s_%s_%s", " ", " ", " ", " ", " ", " ",
-				" ", " ", " ");
+		if (!printableTrendsList.isEmpty()) {
 
-		return printableTrends;
+			printableTrendsList
+					.add(String.format("%s_%s_%s_%s_%s_%s_%s_%s_%s", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "));
+		}
+
+		return printableTrendsList.toArray(new String[] {});
 	}
 }

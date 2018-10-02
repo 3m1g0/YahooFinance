@@ -22,10 +22,10 @@ import com.jakewharton.fliptables.FlipTableConverters;
 
 import in.blacklotus.api.YahooFinanceAPI;
 import in.blacklotus.model.Metadata;
+import in.blacklotus.model.PriceTrend;
+import in.blacklotus.model.PriceTrendData;
 import in.blacklotus.model.Stock;
 import in.blacklotus.model.Symbol;
-import in.blacklotus.model.PriceTrend;
-import in.blacklotus.model.TrendData;
 import in.blacklotus.model.YahooResponse;
 import in.blacklotus.utils.NetworkUtils;
 import in.blacklotus.utils.Scheduler;
@@ -53,9 +53,9 @@ public class YahooFinance {
 	private static int repeat = -1;
 
 	private static final String[] SORT_KEYS = { "NOW", "LOW20", "HIGH20", "%LOW20", "%HIGH20", "%TODAY", "%MOVE",
-			"%DIFFER" };
+			"%VOLUMECHANGE" };
 
-	private static final String HEADER = "SL.NO.,SYMBOL,NOW,LOW20,HIGH20,%(+/-) CHANGE TODAY, %(+/-) FROM LOW20,%(+/-) FROM HIGH20,LOW-DATE,HIGH-DATE,%MOVE,%DIFFER";
+	private static final String HEADER = "SL.NO.,SYMBOL,NOW,LOW20,HIGH20,%(+/-) CHANGE TODAY, %(+/-) FROM LOW20,%(+/-) FROM HIGH20,LOW-DATE,HIGH-DATE,%MOVE,%VOLUMECHANGE,VolR";
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
@@ -303,7 +303,7 @@ public class YahooFinance {
 
 					} else if (SORT_KEYS[7].equals(SORT_KEY)) {
 
-						return Double.compare(s1.getDiffer(), s2.getDiffer());
+						return Double.compare(s1.getVolumeChangePercent(), s2.getVolumeChangePercent());
 
 					} else {
 
@@ -420,7 +420,7 @@ public class YahooFinance {
 
 				if (trendDetail != null) {
 
-					if (trendDetail.isValidTrend(TREND_COUNT)) {
+					if (trendDetail.isValidPriceTrend(TREND_COUNT)) {
 
 						processedTrendList.add(trendDetail);
 					}
@@ -534,8 +534,15 @@ public class YahooFinance {
 					? -9999
 					: (stock.getNow() - closeValues[closeValues.length - 2]) * 100
 							/ closeValues[closeValues.length - 2];
-
+			
 			stock.setNowPercent(nowPercent);
+			
+			double volumeChangePercent = (NO_VALUES < 2 || volumes.length < 2 || volumes[closeValues.length - 2] == null)
+					? -9999
+					: (stock.getVolume() - volumes[volumes.length - 2]) * 100
+							/ volumes[volumes.length - 2];
+			
+			stock.setVolumeChangePercent(volumeChangePercent);
 
 			int highIndex = getHighIndex(highValues);
 
@@ -548,8 +555,6 @@ public class YahooFinance {
 			stock.calculateHighPercenttage();
 
 			stock.calculateLowPercenttage();
-
-			stock.calculateDiffer();
 
 			stock.calculateMove();
 
@@ -641,6 +646,13 @@ public class YahooFinance {
 							/ closeValues[closeValues.length - 2];
 
 			trend.setNowPercent(nowPercent);
+			
+			double volumeChangePercent = (NO_VALUES < 2 || volumes.length < 2 || volumes[closeValues.length - 2] == null)
+					? -9999
+					: (trend.getVolume() - volumes[volumes.length - 2]) * 100
+							/ volumes[volumes.length - 2];
+			
+			trend.setVolumeChangePercent(volumeChangePercent);
 
 			int highIndex = getHighIndex(highValues);
 
@@ -653,8 +665,6 @@ public class YahooFinance {
 			trend.calculateHighPercenttage();
 
 			trend.calculateLowPercenttage();
-
-			trend.calculateDiffer();
 
 			trend.calculateMove();
 
@@ -974,10 +984,10 @@ public class YahooFinance {
 		return min;
 	}
 
-	private static List<TrendData> getTrend(Double closeValues[], Double low20, Date lowDate, Double high20,
+	private static List<PriceTrendData> getTrend(Double closeValues[], Double low20, Date lowDate, Double high20,
 			Date highDate, long timestamps[], Long volumes[]) {
 
-		ArrayList<TrendData> values = new ArrayList<>();
+		ArrayList<PriceTrendData> values = new ArrayList<>();
 
 		int count = 0;
 
@@ -990,7 +1000,7 @@ public class YahooFinance {
 					break;
 				}
 
-				values.add(new TrendData(closeValues[closeValues.length - count - 1], low20, lowDate, high20, highDate,
+				values.add(new PriceTrendData(closeValues[closeValues.length - count - 1], low20, lowDate, high20, highDate,
 						timestamps[timestamps.length - count - 1] * 1000L, volumes[volumes.length - count - 1]));
 
 				count++;
