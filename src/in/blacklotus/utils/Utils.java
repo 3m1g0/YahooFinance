@@ -40,7 +40,6 @@ import in.blacklotus.YahooFinanceApp;
 import in.blacklotus.api.YahooFinanceAPI;
 import in.blacklotus.model.Metadata;
 import in.blacklotus.model.PriceTrend;
-import in.blacklotus.model.PriceTrendData;
 import in.blacklotus.model.Stock;
 import in.blacklotus.model.Symbol;
 import in.blacklotus.model.YahooResponse;
@@ -387,23 +386,23 @@ public class Utils {
 
 			int highIndex = getHighIndex(highValues, NO_VALUES);
 
-			stock.setHigh(highValues[highIndex]);
+			stock.setHigh20(highValues[highIndex]);
 
 			int lowIndex = getLowIndex(lowValues, NO_VALUES);
 
-			stock.setLow(lowValues[lowIndex]);
+			stock.setLow20(lowValues[lowIndex]);
 
-			stock.calculateHighPercenttage();
+			stock.calculateHigh20Percenttage();
 
-			stock.calculateLowPercenttage();
+			stock.calculateLow20Percenttage();
 
 			stock.calculateMove();
 
 			stock.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
-			stock.setHighDate(new Date(timestamps[highIndex] * 1000L));
+			stock.setHigh20Date(new Date(timestamps[highIndex] * 1000L));
 
-			stock.setLowDate(new Date(timestamps[lowIndex] * 1000L));
+			stock.setLow20Date(new Date(timestamps[lowIndex] * 1000L));
 
 		} catch (IOException e) {
 
@@ -497,30 +496,23 @@ public class Utils {
 
 			int highIndex = getHighIndex(highValues, NO_VALUES);
 
-			trend.setHigh(highValues[highIndex]);
+			trend.setHigh20(highValues[highIndex]);
 
 			int lowIndex = getLowIndex(lowValues, NO_VALUES);
 
-			trend.setLow(lowValues[lowIndex]);
+			trend.setLow20(lowValues[lowIndex]);
 
-			trend.calculateHighPercenttage();
+			trend.calculateHigh20Percenttage();
 
-			trend.calculateLowPercenttage();
+			trend.calculateLow20Percenttage();
 
 			trend.calculateMove();
 
 			trend.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
-			trend.setHighDate(new Date(timestamps[highIndex] * 1000L));
+			trend.setHigh20Date(new Date(timestamps[highIndex] * 1000L));
 
-			trend.setLowDate(new Date(timestamps[lowIndex] * 1000L));
-
-			if (TREND_TYPE.equalsIgnoreCase("PRICE")) {
-
-				trend.setTrend(getTrend(closeValues, trend.getLow(), trend.getLowDate(), trend.getHigh(),
-						trend.getHighDate(), timestamps, volumes, TREND_COUNT));
-
-			}
+			trend.setLow20Date(new Date(timestamps[lowIndex] * 1000L));
 
 		} catch (IOException e) {
 
@@ -606,33 +598,6 @@ public class Utils {
 		}
 
 		return dir;
-	}
-
-	public static List<PriceTrendData> getTrend(Double closeValues[], Double low20, Date lowDate, Double high20,
-			Date highDate, long timestamps[], Long volumes[], int TREND_COUNT) {
-
-		ArrayList<PriceTrendData> values = new ArrayList<>();
-
-		int count = 0;
-
-		if (closeValues.length >= TREND_COUNT) {
-
-			while (count < 10) {
-
-				if (closeValues.length <= count) {
-
-					break;
-				}
-
-				values.add(new PriceTrendData(closeValues[closeValues.length - count - 1], low20, lowDate, high20,
-						highDate, timestamps[timestamps.length - count - 1] * 1000L,
-						volumes[volumes.length - count - 1]));
-
-				count++;
-			}
-		}
-
-		return values;
 	}
 
 	public static File generateOutputFile(String type, File outputDir) {

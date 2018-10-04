@@ -38,7 +38,7 @@ public class YahooFinance {
 
 	final static Map<String, List<String>> params = new HashMap<>();
 
-	private static int NO_VALUES = 20;
+	private static int NO_VALUES = 10;
 
 	private static String SORT_KEY = "DEFAULT";
 
@@ -52,10 +52,10 @@ public class YahooFinance {
 
 	private static int repeat = -1;
 
-	private static final String[] SORT_KEYS = { "NOW", "LOW20", "HIGH20", "%LOW20", "%HIGH20", "%TODAY", "%MOVE",
-			"%VOLUMECHANGE" };
+	private static final String[] SORT_KEYS = { "NOW", "LOW10", "HIGH10", "%LOW10", "%HIGH10", "%TODAY", "%MOVE",
+			"PriR", "VolR" };
 
-	private static final String HEADER = "SL.NO.,SYMBOL,NOW,LOW20,HIGH20,%(+/-) CHANGE TODAY, %(+/-) FROM LOW20,%(+/-) FROM HIGH20,LOW-DATE,HIGH-DATE,%MOVE,%VOLUMECHANGE,VolR";
+	private static final String HEADER = "SNO,SYMBOL,NOW,LOW10,HIGH10,%(+/-)NOW, PriR,%(+/-)LOW10,%(+/-)HIGH10,LOW-DATE,HIGH-DATE,%MOVE,%VOLCAGE,VolR";
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
@@ -279,19 +279,19 @@ public class YahooFinance {
 
 					} else if (SORT_KEYS[1].equals(SORT_KEY)) {
 
-						return Double.compare(s1.getLow(), s2.getLow());
+						return Double.compare(s1.getLow20(), s2.getLow20());
 
 					} else if (SORT_KEYS[2].equals(SORT_KEY)) {
 
-						return Double.compare(s1.getHigh(), s2.getHigh());
+						return Double.compare(s1.getHigh20(), s2.getHigh20());
 
 					} else if (SORT_KEYS[3].equals(SORT_KEY)) {
 
-						return Double.compare(s1.getLowPercent(), s2.getLowPercent());
+						return Double.compare(s1.getLow20Percent(), s2.getLow20Percent());
 
 					} else if (SORT_KEYS[4].equals(SORT_KEY)) {
 
-						return Double.compare(s1.getHighPercent(), s2.getHighPercent());
+						return Double.compare(s1.getHigh20Percent(), s2.getHigh20Percent());
 
 					} else if (SORT_KEYS[5].equals(SORT_KEY)) {
 
@@ -303,7 +303,11 @@ public class YahooFinance {
 
 					} else if (SORT_KEYS[7].equals(SORT_KEY)) {
 
-						return Double.compare(s1.getVolumeChangePercent(), s2.getVolumeChangePercent());
+						return Double.compare(s1.priceRank(), s2.priceRank());
+
+					} else if (SORT_KEYS[8].equals(SORT_KEY)) {
+
+						return Double.compare(s1.volumeRank(), s2.volumeRank());
 
 					} else {
 
@@ -440,7 +444,7 @@ public class YahooFinance {
 		processing = false;
 
 		String[] headers = new String[] { "#", "SYMBOL", "LOW20", "HIGH20", TREND.toUpperCase() + "TREND", "$CHANGE",
-				"%$CHANGE", "VOLUME", "%VOLCHANGE" };
+				"%$CHANGE", "VOLUME", "%VOLCAGE" };
 
 		List<String[]> tmp = new ArrayList<>();
 
@@ -534,35 +538,34 @@ public class YahooFinance {
 					? -9999
 					: (stock.getNow() - closeValues[closeValues.length - 2]) * 100
 							/ closeValues[closeValues.length - 2];
-			
+
 			stock.setNowPercent(nowPercent);
-			
-			double volumeChangePercent = (NO_VALUES < 2 || volumes.length < 2 || volumes[closeValues.length - 2] == null)
-					? -9999
-					: (stock.getVolume() - volumes[volumes.length - 2]) * 100
-							/ volumes[volumes.length - 2];
-			
+
+			double volumeChangePercent = (NO_VALUES < 2 || volumes.length < 2
+					|| volumes[closeValues.length - 2] == null) ? -9999
+							: (stock.getVolume() - volumes[volumes.length - 2]) * 100 / volumes[volumes.length - 2];
+
 			stock.setVolumeChangePercent(volumeChangePercent);
 
 			int highIndex = getHighIndex(highValues);
 
-			stock.setHigh(highValues[highIndex]);
+			stock.setHigh20(highValues[highIndex]);
 
 			int lowIndex = getLowIndex(lowValues);
 
-			stock.setLow(lowValues[lowIndex]);
+			stock.setLow20(lowValues[lowIndex]);
 
-			stock.calculateHighPercenttage();
+			stock.calculateHigh20Percenttage();
 
-			stock.calculateLowPercenttage();
+			stock.calculateLow20Percenttage();
 
 			stock.calculateMove();
 
 			stock.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
-			stock.setHighDate(new Date(timestamps[highIndex] * 1000L));
+			stock.setHigh20Date(new Date(timestamps[highIndex] * 1000L));
 
-			stock.setLowDate(new Date(timestamps[lowIndex] * 1000L));
+			stock.setLow20Date(new Date(timestamps[lowIndex] * 1000L));
 
 		} catch (IOException e) {
 
@@ -646,36 +649,35 @@ public class YahooFinance {
 							/ closeValues[closeValues.length - 2];
 
 			trend.setNowPercent(nowPercent);
-			
-			double volumeChangePercent = (NO_VALUES < 2 || volumes.length < 2 || volumes[closeValues.length - 2] == null)
-					? -9999
-					: (trend.getVolume() - volumes[volumes.length - 2]) * 100
-							/ volumes[volumes.length - 2];
-			
+
+			double volumeChangePercent = (NO_VALUES < 2 || volumes.length < 2
+					|| volumes[closeValues.length - 2] == null) ? -9999
+							: (trend.getVolume() - volumes[volumes.length - 2]) * 100 / volumes[volumes.length - 2];
+
 			trend.setVolumeChangePercent(volumeChangePercent);
 
 			int highIndex = getHighIndex(highValues);
 
-			trend.setHigh(highValues[highIndex]);
+			trend.setHigh20(highValues[highIndex]);
 
 			int lowIndex = getLowIndex(lowValues);
 
-			trend.setLow(lowValues[lowIndex]);
+			trend.setLow20(lowValues[lowIndex]);
 
-			trend.calculateHighPercenttage();
+			trend.calculateHigh20Percenttage();
 
-			trend.calculateLowPercenttage();
+			trend.calculateLow20Percenttage();
 
 			trend.calculateMove();
 
 			trend.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
-			trend.setHighDate(new Date(timestamps[highIndex] * 1000L));
+			trend.setHigh20Date(new Date(timestamps[highIndex] * 1000L));
 
-			trend.setLowDate(new Date(timestamps[lowIndex] * 1000L));
+			trend.setLow20Date(new Date(timestamps[lowIndex] * 1000L));
 
-			trend.setTrend(getTrend(closeValues, trend.getLow(), trend.getLowDate(), trend.getHigh(),
-					trend.getHighDate(), timestamps, volumes));
+			trend.setTrend(getTrend(closeValues, trend.getLow20(), trend.getLow20Date(), trend.getHigh20(),
+					trend.getHigh20Date(), timestamps, volumes));
 
 		} catch (IOException e) {
 
@@ -1000,8 +1002,10 @@ public class YahooFinance {
 					break;
 				}
 
-				values.add(new PriceTrendData(closeValues[closeValues.length - count - 1], low20, lowDate, high20, highDate,
-						timestamps[timestamps.length - count - 1] * 1000L, volumes[volumes.length - count - 1]));
+				// values.add(new PriceTrendData(closeValues[closeValues.length
+				// - count - 1], low20, lowDate, high20, highDate,
+				// timestamps[timestamps.length - count - 1] * 1000L,
+				// volumes[volumes.length - count - 1]));
 
 				count++;
 			}

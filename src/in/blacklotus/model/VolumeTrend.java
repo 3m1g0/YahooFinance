@@ -217,6 +217,11 @@ public class VolumeTrend extends Stock {
 		return true;
 	}
 
+	public int getVolumeRank() {
+
+		return this.trends.get(0).getRank();
+	}
+
 	public void sortByRank() {
 
 		Collections.sort(this.trends, new Comparator<VolumeTrendData>() {
@@ -296,9 +301,7 @@ public class VolumeTrend extends Stock {
 		}
 	}
 
-	private int getRankForVolumePercentDiff(Double value) {
-
-		Double diffPercent = Math.abs(value);
+	private int getRankForVolumePercentDiff(Double diffPercent) {
 
 		if (diffPercent > 150) {
 
@@ -316,9 +319,13 @@ public class VolumeTrend extends Stock {
 
 			return 4;
 
-		} else {
+		} else if (diffPercent > 0 && diffPercent <= 40) {
 
 			return 5;
+
+		} else {
+
+			return 9;
 		}
 	}
 
@@ -334,20 +341,18 @@ public class VolumeTrend extends Stock {
 
 				if (printableTrendsList.isEmpty()) {
 
-					tmp = String.format("%d_%s_%s_%s_%s_%s_%s_%s_%d", index, this.getSymbol(),
+					tmp = String.format("%d_%s_%s_%s_%s_%s_%s_%d", index, this.getSymbol(),
 							this.trends.get(i).toPrintableString(), this.trends.get(i).toPrintablePriceChange(),
 							this.trends.get(i).toPrintablePriceChangePercent(),
 							Utils.formattedVolume(this.trends.get(i).getVolume()),
-							this.trends.get(i).toPrintableVolumeChange(),
 							this.trends.get(i).toPrintableVolumeChangePercent(), this.trends.get(i).getRank());
 				} else {
 
-					tmp = String.format("%s_%s_%s_%s_%s_%s_%s_%s_%d", " ", " ", this.trends.get(i).toPrintableString(),
+					tmp = String.format("%s_%s_%s_%s_%s_%s_%s_%s", " ", " ", this.trends.get(i).toPrintableString(),
 							this.trends.get(i).toPrintablePriceChange(),
 							this.trends.get(i).toPrintablePriceChangePercent(),
 							Utils.formattedVolume(this.trends.get(i).getVolume()),
-							this.trends.get(i).toPrintableVolumeChange(),
-							this.trends.get(i).toPrintableVolumeChangePercent(), this.trends.get(i).getRank());
+							this.trends.get(i).toPrintableVolumeChangePercent(), " ");
 				}
 
 				printableTrendsList.add(tmp);
@@ -357,7 +362,7 @@ public class VolumeTrend extends Stock {
 		if (!printableTrendsList.isEmpty()) {
 
 			printableTrendsList
-					.add(String.format("%s_%s_%s_%s_%s_%s_%s_%s_%s", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "));
+					.add(String.format("%s_%s_%s_%s_%s_%s_%s_%s", " ", " ", " ", " ", " ", " ", " ", " ", " "));
 		}
 
 		return printableTrendsList.toArray(new String[] {});

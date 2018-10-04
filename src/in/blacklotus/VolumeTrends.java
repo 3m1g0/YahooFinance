@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +35,7 @@ public class VolumeTrends {
 
 	private static String SORT_KEY = "DEFAULT";
 
-	private static final String[] SORT_KEYS = { "VOLUME" };
+	private static final String[] SORT_KEYS = { "VolR" };
 
 	private static String TREND = null;
 
@@ -185,19 +187,30 @@ public class VolumeTrends {
 
 		processing = false;
 
-		String[] headers = new String[] { "#", "SYMBOL", "PRICE", "PRICEDIFF", "%PRICECHANGE", "VOLUME", "VOLUMEDIFF",
-				"%VOLUMECHANGE", "VolR" };
+		String[] headers = new String[] { "SNO", "SYMBOL", "PRICE", "PRICEDIFF", "%PRICECHANGE", "VOLUME", "%VOLCAGE",
+				"VolR" };
 
 		List<String[]> tmp = new ArrayList<>();
-
+		
 		for (int i = 0; i < processedTrendList.size(); i++) {
 
 			processedTrendList.get(i).assignData();
+		}
 
-			if ("VOLUME".equals(SORT_KEY)) {
+		if ("VolR".equals(SORT_KEY)) {
 
-				processedTrendList.get(i).sortByRank();
-			}
+			Collections.sort(processedTrendList, new Comparator<VolumeTrend>() {
+
+				@Override
+				public int compare(VolumeTrend s1, VolumeTrend s2) {
+
+					return Integer.compare(s1.getVolumeRank(), s2.getVolumeRank());
+				}
+			});
+
+		} 
+
+		for (int i = 0; i < processedTrendList.size(); i++) {
 
 			String[] printableVolumes = processedTrendList.get(i).toPrintableStrings(i + 1, VOLUME_DIFF);
 
@@ -300,28 +313,45 @@ public class VolumeTrends {
 
 			trend.setVolumeChangePercent(volumeChangePercent);
 
-			int highIndex = Utils.getHighIndex(highValues, NO_VALUES);
+			int high10Index = Utils.getHighIndex(highValues, 10);
 
-			trend.setHigh(highValues[highIndex]);
+			trend.setHigh10(highValues[high10Index]);
 
-			int lowIndex = Utils.getLowIndex(lowValues, NO_VALUES);
+			int high20Index = Utils.getHighIndex(highValues, NO_VALUES);
 
-			trend.setLow(lowValues[lowIndex]);
+			trend.setHigh20(highValues[high20Index]);
 
-			trend.calculateHighPercenttage();
+			int low10Index = Utils.getLowIndex(lowValues, 10);
 
-			trend.calculateLowPercenttage();
+			trend.setLow10(lowValues[low10Index]);
+
+			int low20Index = Utils.getLowIndex(lowValues, NO_VALUES);
+
+			trend.setLow20(lowValues[low20Index]);
+
+			trend.calculateHigh10Percenttage();
+
+			trend.calculateHigh20Percenttage();
+
+			trend.calculateLow10Percenttage();
+
+			trend.calculateLow20Percenttage();
 
 			trend.calculateMove();
 
 			trend.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
-			trend.setHighDate(new Date(timestamps[highIndex] * 1000L));
+			trend.setHigh10Date(new Date(timestamps[high10Index] * 1000L));
 
-			trend.setLowDate(new Date(timestamps[lowIndex] * 1000L));
+			trend.setHigh20Date(new Date(timestamps[high20Index] * 1000L));
 
-			trend.setTrend(getVolumeTrend(closeValues, trend.getLow(), trend.getLowDate(), trend.getHigh(),
-					trend.getHighDate(), timestamps, volumes, TREND_COUNT));
+			trend.setLow10Date(new Date(timestamps[low10Index] * 1000L));
+
+			trend.setLow20Date(new Date(timestamps[low20Index] * 1000L));
+
+			trend.setTrend(getVolumeTrend(closeValues, trend.getLow10(), trend.getLow20(), trend.getLow10Date(),
+					trend.getLow20Date(), trend.getHigh10(), trend.getHigh20(), trend.getHigh10Date(),
+					trend.getHigh20Date(), timestamps, volumes, TREND_COUNT));
 
 		} catch (IOException e) {
 
@@ -331,8 +361,9 @@ public class VolumeTrends {
 		return trend;
 	}
 
-	private static List<VolumeTrendData> getVolumeTrend(Double closeValues[], Double low20, Date lowDate, Double high20,
-			Date highDate, long timestamps[], Long volumes[], int TREND_COUNT) {
+	private static List<VolumeTrendData> getVolumeTrend(Double closeValues[], Double low10, Double low20,
+			Date low10Date, Date low20Date, Double high10, Double high20, Date high10Date, Date high20Date,
+			long timestamps[], Long volumes[], int TREND_COUNT) {
 
 		ArrayList<VolumeTrendData> values = new ArrayList<>();
 
@@ -347,9 +378,9 @@ public class VolumeTrends {
 					break;
 				}
 
-				values.add(new VolumeTrendData(closeValues[closeValues.length - count - 1], low20, lowDate, high20,
-						highDate, timestamps[timestamps.length - count - 1] * 1000L,
-						volumes[volumes.length - count - 1]));
+				values.add(new VolumeTrendData(closeValues[closeValues.length - count - 1], low10, low20, low10Date,
+						low20Date, high10, high20, high10Date, high20Date,
+						timestamps[timestamps.length - count - 1] * 1000L, volumes[volumes.length - count - 1]));
 
 				count++;
 			}
@@ -362,7 +393,7 @@ public class VolumeTrends {
 
 		try {
 
-			File file = Utils.generateOutputFile("voltrends", Utils.generateOutputDir());
+			File file = Utils.generateOutputFile("voltrend", Utils.generateOutputDir());
 
 			if (!file.exists()) {
 
