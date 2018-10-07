@@ -39,7 +39,9 @@ public class VolumeTrendData {
 
 	private Double volumeDiffPercentage;
 
-	private int rank;
+	private int priceRank;
+	
+	private int volumeRank;
 
 	private SimpleDateFormat sdf;
 
@@ -193,12 +195,20 @@ public class VolumeTrendData {
 		this.volumeDiffPercentage = volumeDiffPercentage;
 	}
 
-	public int getRank() {
-		return rank;
+	public int getVolumeRank() {
+		return volumeRank;
 	}
 
-	public void setRank(int rank) {
-		this.rank = rank;
+	public void setVolumeRank(int rank) {
+		this.volumeRank = rank;
+	}
+	
+	public int getPriceRank() {
+		return priceRank;
+	}
+
+	public void setPriceRank(int priceRank) {
+		this.priceRank = priceRank;
 	}
 
 	public String toPrintableString() {
@@ -206,14 +216,36 @@ public class VolumeTrendData {
 		return String.format("%s: %s", sdf.format(new Date(this.timestamp)), round(this.value));
 	}
 
-	public String toPrintableLow() {
+	public String toPrintableLow(int index) {
 
-		return String.format("%s: %s", sdf.format(this.low20Date), round(this.low20));
+		if (index == 0) {
+
+			return String.format("%s: %s", sdf.format(this.low10Date), round(this.low10));
+
+		} else if (index == 1) {
+
+			return String.format("%s: %s", sdf.format(this.low20Date), round(this.low20));
+
+		} else {
+
+			return " ";
+		}
 	}
 
-	public String toPrintableHigh() {
+	public String toPrintableHigh(int index) {
 
-		return String.format("%s: %s", sdf.format(this.high20Date), round(this.high20));
+		if (index == 0) {
+
+			return String.format("%s: %s", sdf.format(this.high10Date), round(this.high10));
+
+		} else if (index == 1) {
+
+			return String.format("%s: %s", sdf.format(this.high20Date), round(this.high20));
+
+		} else {
+
+			return " ";
+		}
 	}
 
 	public String toPrintablePriceChange() {

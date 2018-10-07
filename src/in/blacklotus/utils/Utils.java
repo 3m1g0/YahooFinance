@@ -237,7 +237,7 @@ public class Utils {
 
 		for (String k : SORT_KEYS) {
 
-			if (k.equals(key))
+			if (k.equalsIgnoreCase(key))
 
 				return true;
 		}

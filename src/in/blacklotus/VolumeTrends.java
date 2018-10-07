@@ -35,7 +35,7 @@ public class VolumeTrends {
 
 	private static String SORT_KEY = "DEFAULT";
 
-	private static final String[] SORT_KEYS = { "VolR" };
+	private static final String[] SORT_KEYS = { "PriR", "VolR" };
 
 	private static String TREND = null;
 
@@ -187,17 +187,28 @@ public class VolumeTrends {
 
 		processing = false;
 
-		String[] headers = new String[] { "SNO", "SYMBOL", "PRICE", "PRICEDIFF", "%PRICECHANGE", "VOLUME", "%VOLCAGE",
-				"VolR" };
+		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", "HIGH10/20", "PRICE", "PRICAGE", "PriR",
+				"%PRICECHANGE", "VOLUME", "%VOLCAGE", "VolR" };
 
 		List<String[]> tmp = new ArrayList<>();
-		
+
 		for (int i = 0; i < processedTrendList.size(); i++) {
 
 			processedTrendList.get(i).assignData();
 		}
 
-		if ("VolR".equals(SORT_KEY)) {
+		if ("PriR".equalsIgnoreCase(SORT_KEY)) {
+
+			Collections.sort(processedTrendList, new Comparator<VolumeTrend>() {
+
+				@Override
+				public int compare(VolumeTrend s1, VolumeTrend s2) {
+
+					return Integer.compare(s1.getPriceRank(), s2.getPriceRank());
+				}
+			});
+
+		} else if ("VolR".equalsIgnoreCase(SORT_KEY)) {
 
 			Collections.sort(processedTrendList, new Comparator<VolumeTrend>() {
 
@@ -208,10 +219,10 @@ public class VolumeTrends {
 				}
 			});
 
-		} 
+		}
 
 		for (int i = 0; i < processedTrendList.size(); i++) {
-
+			
 			String[] printableVolumes = processedTrendList.get(i).toPrintableStrings(i + 1, VOLUME_DIFF);
 
 			for (int j = 0; j < printableVolumes.length; j++) {

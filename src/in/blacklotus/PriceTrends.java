@@ -183,7 +183,7 @@ public class PriceTrends {
 			processedTrendList.get(i).assignData();
 		}
 
-		if ("PriR".equals(SORT_KEY)) {
+		if ("PriR".equalsIgnoreCase(SORT_KEY)) {
 
 			Collections.sort(processedTrendList, new Comparator<PriceTrend>() {
 
@@ -194,7 +194,7 @@ public class PriceTrends {
 				}
 			});
 
-		} else if ("VolR".equals(SORT_KEY)) {
+		} else if ("VolR".equalsIgnoreCase(SORT_KEY)) {
 
 			Collections.sort(processedTrendList, new Comparator<PriceTrend>() {
 
@@ -205,7 +205,7 @@ public class PriceTrends {
 				}
 			});
 
-		} else if ("DayR".equals(SORT_KEY)) {
+		} else if ("DayR".equalsIgnoreCase(SORT_KEY)) {
 
 			Collections.sort(processedTrendList, new Comparator<PriceTrend>() {
 

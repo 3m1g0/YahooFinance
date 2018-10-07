@@ -1,6 +1,7 @@
 package in.blacklotus.model;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 public class Stock {
@@ -283,6 +284,44 @@ public class Stock {
 			return false;
 		}
 
+	}
+
+	public boolean applyDropFilter(int drop) {
+
+		if (getDifferenceDays(new Date(), low20Date) < drop) {
+
+			return false;
+		}
+
+		if (getDifferenceDays(new Date(), high20Date) < drop) {
+
+			return false;
+		}
+
+		return true;
+	}
+
+	public boolean applyCentFilter(int cent) {
+		
+		if (low20Percent > cent && low20Percent > Math.abs(high20Percent)) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	public static long getDifferenceDays(Date d1, Date d2) {
+
+		Calendar now = Calendar.getInstance();
+
+		Calendar target = Calendar.getInstance();
+
+		target.setTime(d2);
+
+		int days = now.get(Calendar.DAY_OF_YEAR) - target.get(Calendar.DAY_OF_YEAR);
+
+		return days;
 	}
 
 	public boolean applyFilter(String filter) {
