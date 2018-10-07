@@ -5,8 +5,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -21,6 +19,7 @@ import in.blacklotus.model.PriceTrend;
 import in.blacklotus.model.PriceTrendData;
 import in.blacklotus.model.Symbol;
 import in.blacklotus.model.YahooResponse;
+import in.blacklotus.utils.MultiComparator;
 import in.blacklotus.utils.NetworkUtils;
 import in.blacklotus.utils.Utils;
 import okhttp3.ResponseBody;
@@ -33,7 +32,7 @@ public class PriceTrends {
 
 	private static int NO_VALUES = 20;
 
-	private static String SORT_KEY = "DEFAULT";
+	private static List<String> SORT_KEY;
 
 	private static final String[] SORT_KEYS = { "PriR", "VolR", "DayR" };
 
@@ -70,14 +69,9 @@ public class PriceTrends {
 
 		if (params.containsKey("sort")) {
 
-			SORT_KEY = params.get("sort").get(0);
+			SORT_KEY = params.get("sort");
 
-			if (!Utils.isValidSortKey(SORT_KEY, SORT_KEYS)) {
-
-				System.out.println("***   Sort KEY must be one of " + Arrays.toString(SORT_KEYS) + "  ***");
-
-				System.out.println("***   Proceeding without any sort option  ***");
-			}
+			SORT_KEY = Utils.getValidSortKeys(SORT_KEY, SORT_KEYS);
 		}
 
 		if (params.containsKey("trend")) {
@@ -183,38 +177,21 @@ public class PriceTrends {
 			processedTrendList.get(i).assignData();
 		}
 
-		if ("PriR".equalsIgnoreCase(SORT_KEY)) {
+		if (SORT_KEY != null) {
 
-			Collections.sort(processedTrendList, new Comparator<PriceTrend>() {
+			List<Comparator<PriceTrend>> comparators = new ArrayList<>();
 
-				@Override
-				public int compare(PriceTrend s1, PriceTrend s2) {
+			for (String key : SORT_KEY) {
 
-					return Integer.compare(s1.getPriceRank(), s2.getPriceRank());
+				Comparator<PriceTrend> comparatorForKey = getComparatorForKey(key);
+
+				if (comparatorForKey != null) {
+
+					comparators.add(comparatorForKey);
 				}
-			});
+			}
 
-		} else if ("VolR".equalsIgnoreCase(SORT_KEY)) {
-
-			Collections.sort(processedTrendList, new Comparator<PriceTrend>() {
-
-				@Override
-				public int compare(PriceTrend s1, PriceTrend s2) {
-
-					return Integer.compare(s1.getVolumeRank(), s2.getVolumeRank());
-				}
-			});
-
-		} else if ("DayR".equalsIgnoreCase(SORT_KEY)) {
-
-			Collections.sort(processedTrendList, new Comparator<PriceTrend>() {
-
-				@Override
-				public int compare(PriceTrend s1, PriceTrend s2) {
-
-					return Integer.compare(s1.getDayRank(), s2.getDayRank());
-				}
-			});
+			MultiComparator.sort(processedTrendList, comparators);
 		}
 
 		for (int i = 0; i < processedTrendList.size(); i++) {
@@ -394,6 +371,47 @@ public class PriceTrends {
 		}
 
 		return values;
+	}
+
+	private static Comparator<PriceTrend> getComparatorForKey(String key) {
+
+		if (key.equalsIgnoreCase(SORT_KEYS[0])) {
+			
+			return new Comparator<PriceTrend>() {
+
+				@Override
+				public int compare(PriceTrend s1, PriceTrend s2) {
+
+					return Integer.compare(s1.getPriceRank(), s2.getPriceRank());
+				}
+			};
+
+		} else if (key.equalsIgnoreCase(SORT_KEYS[1])) {
+			
+			return new Comparator<PriceTrend>() {
+
+				@Override
+				public int compare(PriceTrend s1, PriceTrend s2) {
+
+					return Integer.compare(s1.getVolumeRank(), s2.getVolumeRank());
+				}
+			};
+
+		} else if (key.equalsIgnoreCase(SORT_KEYS[2])) {
+			
+			return new Comparator<PriceTrend>() {
+
+				@Override
+				public int compare(PriceTrend s1, PriceTrend s2) {
+
+					return Integer.compare(s1.getDayRank(), s2.getDayRank());
+				}
+			};
+
+		} else {
+
+			return null;
+		}
 	}
 
 	private static void writeTrendsToFile(String[] headers, List<PriceTrend> stocks) {

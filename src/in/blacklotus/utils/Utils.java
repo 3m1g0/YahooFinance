@@ -244,6 +244,34 @@ public class Utils {
 
 		return false;
 	}
+	
+	public static List<String> getValidSortKeys(List<String> keys, String[] SORT_KEYS) {
+		
+		List<String> mKeys = new ArrayList<>();
+		
+		String excludes = "";
+
+		for (String k : keys) {
+
+			if (isValidSortKey(k, SORT_KEYS))
+
+				mKeys.add(k);
+			
+			else {
+				
+				excludes += k + " ";
+			}
+		}
+		
+		if(!"".equals(excludes)) {
+			
+			System.out.println("***   Sort KEY must be one of " + Arrays.toString(SORT_KEYS) + "  ***");
+
+			System.out.println("***   Proceeding without " + excludes + "  ***");
+		}
+		
+		return mKeys;
+	}
 
 	public static List<Symbol> readInput(String INPUT_FILE_NAME) {
 

@@ -8,8 +8,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -27,6 +25,7 @@ import in.blacklotus.model.PriceTrendData;
 import in.blacklotus.model.Stock;
 import in.blacklotus.model.Symbol;
 import in.blacklotus.model.YahooResponse;
+import in.blacklotus.utils.MultiComparator;
 import in.blacklotus.utils.NetworkUtils;
 import in.blacklotus.utils.Scheduler;
 import in.blacklotus.utils.Utils;
@@ -40,7 +39,7 @@ public class YahooFinance {
 
 	private static int NO_VALUES = 10;
 
-	private static String SORT_KEY = "DEFAULT";
+	private static List<String> SORT_KEY;
 
 	private static String FILTER = null;
 
@@ -102,14 +101,9 @@ public class YahooFinance {
 
 		if (params.containsKey("sort")) {
 
-			SORT_KEY = params.get("sort").get(0);
+			SORT_KEY = params.get("sort");
 
-			if (!isValidSortKey(SORT_KEY)) {
-
-				System.out.println("***   Sort KEY must be one of " + Arrays.toString(SORT_KEYS) + "  ***");
-
-				System.out.println("***   Proceeding without any sort option  ***");
-			}
+			SORT_KEY = Utils.getValidSortKeys(SORT_KEY, SORT_KEYS);
 		}
 
 		if (params.containsKey("filter")) {
@@ -309,55 +303,21 @@ public class YahooFinance {
 
 		processing = false;
 
-		if (!"DEFAULT".equals(SORT_KEY)) {
+		if (SORT_KEY != null) {
 
-			Collections.sort(stocksList, new Comparator<Stock>() {
+			List<Comparator<Stock>> comparators = new ArrayList<>();
 
-				@Override
-				public int compare(Stock s1, Stock s2) {
+			for (String key : SORT_KEY) {
 
-					if (SORT_KEYS[0].equalsIgnoreCase(SORT_KEY)) {
+				Comparator<Stock> comparatorForKey = getComparatorForKey(key);
 
-						return Double.compare(s1.getNow(), s2.getNow());
+				if (comparatorForKey != null) {
 
-					} else if (SORT_KEYS[1].equalsIgnoreCase(SORT_KEY)) {
-
-						return Double.compare(s1.getLow20(), s2.getLow20());
-
-					} else if (SORT_KEYS[2].equalsIgnoreCase(SORT_KEY)) {
-
-						return Double.compare(s1.getHigh20(), s2.getHigh20());
-
-					} else if (SORT_KEYS[3].equalsIgnoreCase(SORT_KEY)) {
-
-						return Double.compare(s1.getLow20Percent(), s2.getLow20Percent());
-
-					} else if (SORT_KEYS[4].equalsIgnoreCase(SORT_KEY)) {
-
-						return Double.compare(s1.getHigh20Percent(), s2.getHigh20Percent());
-
-					} else if (SORT_KEYS[5].equalsIgnoreCase(SORT_KEY)) {
-
-						return Double.compare(s1.getNowPercent(), s2.getNowPercent());
-
-					} else if (SORT_KEYS[6].equalsIgnoreCase(SORT_KEY)) {
-
-						return Double.compare(s1.getMove(), s2.getMove());
-
-					} else if (SORT_KEYS[7].equalsIgnoreCase(SORT_KEY)) {
-
-						return Double.compare(s1.priceRank(), s2.priceRank());
-
-					} else if (SORT_KEYS[8].equalsIgnoreCase(SORT_KEY)) {
-
-						return Double.compare(s1.volumeRank(), s2.volumeRank());
-
-					} else {
-
-						return s1.getSymbol().compareTo(s2.getSymbol());
-					}
+					comparators.add(comparatorForKey);
 				}
-			});
+			}
+
+			MultiComparator.sort(stocksList, comparators);
 		}
 
 		String[] headers = HEADER.split(",");
@@ -591,10 +551,14 @@ public class YahooFinance {
 			stock.setVolumeChangePercent(volumeChangePercent);
 
 			int highIndex = getHighIndex(highValues);
+			
+			stock.setHigh10Index(highValues.length - highIndex);
 
 			stock.setHigh20(highValues[highIndex]);
 
 			int lowIndex = getLowIndex(lowValues);
+			
+			stock.setLow10Index(lowValues.length - lowIndex);
 
 			stock.setLow20(lowValues[lowIndex]);
 
@@ -728,6 +692,120 @@ public class YahooFinance {
 		}
 
 		return trend;
+	}
+	
+	private static Comparator<Stock> getComparatorForKey(String key) {
+		
+		if (SORT_KEYS[0].equalsIgnoreCase(key)) {
+			
+			return new Comparator<Stock>() {
+
+				@Override
+				public int compare(Stock s1, Stock s2) {
+
+					return Double.compare(s1.getNow(), s2.getNow());
+				}
+			};
+
+		} else if (SORT_KEYS[1].equalsIgnoreCase(key)) {
+			
+			return new Comparator<Stock>() {
+
+				@Override
+				public int compare(Stock s1, Stock s2) {
+
+					return Double.compare(s1.getLow20(), s2.getLow20());
+				}
+			};
+
+		} else if (SORT_KEYS[2].equalsIgnoreCase(key)) {
+			
+			return new Comparator<Stock>() {
+
+				@Override
+				public int compare(Stock s1, Stock s2) {
+
+					return Double.compare(s1.getHigh20(), s2.getHigh20());
+				}
+			};
+
+		} else if (SORT_KEYS[3].equalsIgnoreCase(key)) {
+			
+			return new Comparator<Stock>() {
+
+				@Override
+				public int compare(Stock s1, Stock s2) {
+
+					return Double.compare(s1.getLow20Percent(), s2.getLow20Percent());
+				}
+			};
+
+		} else if (SORT_KEYS[4].equalsIgnoreCase(key)) {
+			
+			return new Comparator<Stock>() {
+
+				@Override
+				public int compare(Stock s1, Stock s2) {
+
+					return Double.compare(s1.getHigh20Percent(), s2.getHigh20Percent());
+				}
+			};
+
+		} else if (SORT_KEYS[5].equalsIgnoreCase(key)) {
+			
+			return new Comparator<Stock>() {
+
+				@Override
+				public int compare(Stock s1, Stock s2) {
+
+					return Double.compare(s1.getNowPercent(), s2.getNowPercent());
+				}
+			};
+
+		} else if (SORT_KEYS[6].equalsIgnoreCase(key)) {
+			
+			return new Comparator<Stock>() {
+
+				@Override
+				public int compare(Stock s1, Stock s2) {
+
+					return Double.compare(s1.getMove(), s2.getMove());
+				}
+			};
+
+		} else if (SORT_KEYS[7].equalsIgnoreCase(key)) {
+			
+			return new Comparator<Stock>() {
+
+				@Override
+				public int compare(Stock s1, Stock s2) {
+
+					return Double.compare(s1.priceRank(), s2.priceRank());
+				}
+			};
+
+		} else if (SORT_KEYS[8].equalsIgnoreCase(key)) {
+			
+			return new Comparator<Stock>() {
+
+				@Override
+				public int compare(Stock s1, Stock s2) {
+
+					return Double.compare(s1.volumeRank(), s2.volumeRank());
+				}
+			};
+
+		} else {
+			
+			return new Comparator<Stock>() {
+
+				@Override
+				public int compare(Stock s1, Stock s2) {
+
+					return s1.getSymbol().compareTo(s2.getSymbol());
+				}
+			};
+		}
 	}
 
 	private static List<Symbol> readInput() {
@@ -1164,18 +1242,6 @@ public class YahooFinance {
 				return;
 			}
 		}
-	}
-
-	private static boolean isValidSortKey(String key) {
-
-		for (String k : SORT_KEYS) {
-
-			if (k.equalsIgnoreCase(key))
-
-				return true;
-		}
-
-		return false;
 	}
 
 	private static void showProgress() {
