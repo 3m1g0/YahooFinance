@@ -17,6 +17,8 @@ public class Stock {
 
 	private double now;
 
+	private double pricage;
+
 	private Long volume;
 
 	private double low10;
@@ -46,13 +48,13 @@ public class Stock {
 	private Date low10Date;
 
 	private Date low20Date;
-	
+
 	private int low10Index;
-	
+
 	private int low20Index;
-	
+
 	private int high10Index;
-	
+
 	private int high20Index;
 
 	private double volumeChangePercent;
@@ -63,7 +65,7 @@ public class Stock {
 
 	public Stock() {
 
-		String pattern = "MM/dd/yyyy";
+		String pattern = "MMM dd";
 
 		sdf = new SimpleDateFormat(pattern);
 	}
@@ -122,6 +124,18 @@ public class Stock {
 
 	public void setNow(double close) {
 		this.now = close;
+	}
+
+	public double getPricage() {
+		return pricage;
+	}
+
+	public void setPricage(double pricage) {
+		this.pricage = pricage;
+	}
+
+	public void setVolume(Long volume) {
+		this.volume = volume;
 	}
 
 	public long getVolume() {
@@ -326,7 +340,7 @@ public class Stock {
 	}
 
 	public boolean applyDropFilter(int drop) {
-		
+
 		if (low10Index <= drop) {
 
 			return false;
@@ -340,11 +354,18 @@ public class Stock {
 		return true;
 	}
 
-	public boolean applyCentFilter(int cent) {
-		
-		if (low20Percent > cent && low20Percent < Math.abs(high20Percent)) {
+	public boolean applyCentFilter(int cent, String lten) {
 
-			return true;
+		if (low20Percent > cent) {
+
+			if ("low".equalsIgnoreCase(lten) && low20Percent < Math.abs(high20Percent)) {
+
+				return true;
+
+			} else if ("high".equalsIgnoreCase(lten) && low20Percent > Math.abs(high20Percent)) {
+
+				return true;
+			}
 		}
 
 		return false;
@@ -579,25 +600,35 @@ public class Stock {
 
 		if (name == null) {
 
-			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
+			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
 		}
 
-		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", index, this.symbol, round(this.now),
-				round(this.low20), round(this.high20), getPrintableData(round(this.nowPercent)), priceRank(),
+		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", index, this.symbol, toPrintableLow(0),
+				round(this.now), toPrintableHigh(0), round(this.pricage), getPrintableData(round(this.nowPercent)),
 				getPrintableData(round(this.low20Percent)), getPrintableData(round(this.high20Percent)),
-				sdf.format(this.low20Date), sdf.format(this.high20Date), getPrintableData(round(this.move)),
-				getPrintableData(round(this.volumeChangePercent)), volumeRank());
+				getPrintableData(round(this.move)), getPrintableData(round(this.volumeChangePercent)), volumeRank(),
+				priceRank());
 
+	}
+
+	public String toPrintableLow(int index) {
+
+		return String.format("%s: %s", sdf.format(this.low20Date), round(this.low20));
+	}
+
+	public String toPrintableHigh(int index) {
+
+		return String.format("%s: %s", sdf.format(this.high20Date), round(this.high10));
 	}
 
 	@Override
 	public String toString() {
 
 		return String.format("%s,%.2f,%.2f,%.2f,%.2f,%d,%.2f,%.2f,%s,%s,%.2f,%.2f,%.2f", this.symbol, round(this.now),
-				round(this.low20), round(this.high20), round(this.nowPercent), priceRank(), round(this.low20Percent),
-				round(this.high20Percent), sdf.format(this.low20Date), sdf.format(this.high20Date), round(this.move),
-				round(this.volumeChangePercent), volumeRank());
-
+				round(this.low20), round(this.high20), round(this.nowPercent),
+				round(this.low20Percent), round(this.high20Percent), sdf.format(this.low20Date),
+				sdf.format(this.high20Date), round(this.move), round(this.volumeChangePercent), volumeRank(),
+				priceRank());
 	}
 
 }

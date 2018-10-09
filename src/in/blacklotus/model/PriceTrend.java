@@ -135,7 +135,7 @@ public class PriceTrend extends Stock {
 	}
 
 	public int getVolumeRank() {
-		
+
 		return this.trends.get(0).getVolumeRank();
 	}
 
@@ -324,18 +324,18 @@ public class PriceTrend extends Stock {
 				tmp = String.format("%d_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s", index, this.getSymbol(),
 						this.trends.get(i).toPrintableLow(i), this.trends.get(i).toPrintableHigh(i),
 						this.trends.get(i).toPrintableString(), this.trends.get(i).toPrintablePriceChange(),
-						this.trends.get(i).toPrintablePriceChangePercent(), this.trends.get(i).getPriceRank(),
+						this.trends.get(i).toPrintablePriceChangePercent(),
 						Utils.formattedVolume(this.trends.get(i).getVolume()),
 						this.trends.get(i).toPrintableVolumeChangePercent(), this.trends.get(i).getVolumeRank(),
-						this.trends.get(i).getDayRank());
+						this.trends.get(i).getPriceRank(), this.trends.get(i).getDayRank());
 			} else {
 
 				tmp = String.format("%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s", " ", " ",
 						this.trends.get(i).toPrintableLow(i), this.trends.get(i).toPrintableHigh(i),
 						this.trends.get(i).toPrintableString(), this.trends.get(i).toPrintablePriceChange(),
-						this.trends.get(i).toPrintablePriceChangePercent(), " ",
+						this.trends.get(i).toPrintablePriceChangePercent(),
 						Utils.formattedVolume(this.trends.get(i).getVolume()),
-						this.trends.get(i).toPrintableVolumeChangePercent(), " ", " ");
+						this.trends.get(i).toPrintableVolumeChangePercent(), " ", " ", " ");
 			}
 
 			printableTrendsList.add(tmp);

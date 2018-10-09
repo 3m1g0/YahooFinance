@@ -181,8 +181,8 @@ public class VolumeTrends {
 
 		processing = false;
 
-		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", "HIGH10/20", "PRICE", "PRICAGE", "PriR",
-				"%PRICECHANGE", "VOLUME", "%VOLCAGE", "VolR" };
+		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", "HIGH10/20", "PRICE", "$PRICAGE",
+				"%PRICAGE", "VOLUME", "%VOLCAGE", "VolR", "PriR" };
 
 		List<String[]> tmp = new ArrayList<>();
 

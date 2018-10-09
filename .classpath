@@ -9,8 +9,5 @@
 	<classpathentry kind="lib" path="lib/okio-1.13.0.jar"/>
 	<classpathentry kind="lib" path="lib/fliptables-1.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/mail.jar"/>
-	<classpathentry kind="lib" path="lib/tray-notification.jar"/>
-	<classpathentry kind="lib" path="lib/tray-tester.jar"/>
-	<classpathentry kind="lib" path="lib/hsqldb-2.4.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

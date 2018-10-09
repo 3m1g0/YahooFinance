@@ -168,7 +168,7 @@ public class PriceTrends {
 		processing = false;
 
 		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", "HIGH10/20", TREND.toUpperCase() + "TREND",
-				"$CHANGE", "%$CHANGE", "PriR", "VOLUME", "%VOLCAGE", "VolR", "DayR" };
+				"$PRICAGE", "%PRICAGE", "VOLUME", "%VOLCAGE", "VolR", "PriR", "DayR" };
 
 		List<String[]> tmp = new ArrayList<>();
 
