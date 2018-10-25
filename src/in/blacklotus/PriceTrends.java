@@ -38,11 +38,11 @@ public class PriceTrends {
 	private static final String[] SORT_KEYS = { "PriR", "VolR", "DayR" };
 
 	private static String TREND = null;
-	
+
 	private static String SMAR = null;
 
 	private static int TREND_COUNT = 2;
-	
+
 	private static int SURE = 10;
 
 	private static boolean processing = false;
@@ -83,12 +83,12 @@ public class PriceTrends {
 
 			TREND = params.get("trend").get(0);
 		}
-		
+
 		if (params.containsKey("smar")) {
 
 			SMAR = params.get("smar").get(0);
 		}
-		
+
 		if (params.containsKey("sure")) {
 
 			try {
@@ -169,13 +169,13 @@ public class PriceTrends {
 				PriceTrend trendDetail = getTrendDetails(symbol.getName());
 
 				if (trendDetail != null) {
-					
+
 					boolean filter = true;
 
 					filter = filter && trendDetail.isValidPriceTrend(TREND_COUNT);
-					
+
 					if (SMAR != null) {
-						
+
 						filter = filter && trendDetail.applySMARFilter(SMAR);
 					}
 
@@ -199,9 +199,9 @@ public class PriceTrends {
 
 		processing = false;
 
-		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", "HIGH10/20", TREND.toUpperCase() + "TREND",
-				"$PRICAGE", "%PRICAGE", "$LOHIDIF", "SMA10", "%LOW10", "%HIGH10", "VOLUME", "%VOLCAGE",
-				"VolR", "PriR", "DayR", "SMAR", "SUPT", "REST", "%SUPT", "%REST", "SRDIF" };
+		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", TREND.toUpperCase() + "TREND", "HIGH10/20",
+				"$PRICAGE", "%PRICAGE", "$LOHIDIF", "SUPT", "REST", "%SUPT", "%REST", "SRDIF", "SURE", "%LOW10",
+				"%HIGH10", "VOLUME", "%VOLCAGE", "VolR", "PriR", "DayR", "TICKER" };
 
 		List<String[]> tmp = new ArrayList<>();
 
@@ -360,16 +360,16 @@ public class PriceTrends {
 
 			trend.setSma10(SMA10(closeValues));
 
-			trend.setSmar(SMAR(trend.getNow(), trend.getSma10()));
-			
 			trend.setSupt(SUPT(closeValues, SURE));
-			
+
 			trend.setRest(REST(closeValues, SURE));
-			
+
+			trend.setSmar(SMAR(trend.getNow(), trend.getSupt(), trend.getRest()));
+
 			trend.calculateSuptPercenttage();
-			
+
 			trend.calculatRestPercenttage();
-			
+
 			trend.calculateSRDiff();
 
 			trend.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
@@ -415,26 +415,33 @@ public class PriceTrends {
 		return sum / count;
 	}
 
-	private static String SMAR(Double now, double SMA10) {
+	private static String SMAR(Double now, double SUPT, double REST) {
 
-		if (now > SMA10) {
+		if (now > SUPT) {
 
-			return "above";
+			return "Above";
 
-		} else if (now < SMA10) {
+		} else if (now < SUPT) {
 
-			return "below";
+			return "Below";
 
 		} else {
 
-			return "flat";
+			if (now > REST) {
+
+				return "Resist";
+
+			} else {
+
+				return " ";
+			}
 		}
 	}
-	
+
 	private static double SUPT(Double[] closeValues, int sure) {
 
 		ArrayList<Double> sortedValues = new ArrayList<>();
-		
+
 		int count = 0;
 
 		while (count < sure) {
@@ -448,23 +455,23 @@ public class PriceTrends {
 
 			count++;
 		}
-		
+
 		Collections.sort(sortedValues);
-		
+
 		Double sum = Double.valueOf(0);
-		
-		for(int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
-			
+
+		for (int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+
 			sum += sortedValues.get(i);
 		}
 
 		return sum / Math.min(sortedValues.size(), 4);
 	}
-	
+
 	private static double REST(Double[] closeValues, int sure) {
 
 		ArrayList<Double> sortedValues = new ArrayList<>();
-		
+
 		int count = 0;
 
 		while (count < sure) {
@@ -478,13 +485,13 @@ public class PriceTrends {
 
 			count++;
 		}
-		
+
 		Collections.sort(sortedValues);
-		
+
 		Double sum = Double.valueOf(0);
-		
-		for(int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
-			
+
+		for (int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+
 			sum += sortedValues.get(sortedValues.size() - i - 1);
 		}
 

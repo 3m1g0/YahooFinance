@@ -5,7 +5,7 @@ import java.util.Date;
 
 public class Stock {
 
-	public static final String[] KEYS = { "NOW", "LOW20", "HIGH20", "%LOW20", "%HIGH20", "%TODAY", "%MOVE", "%DIFFER" };
+	public static final String[] KEYS = { "NOW", "LOW10", "HIGH10", "%LOW10", "%HIGH10", "%TODAY", "%MOVE", "%DIFFER" };
 
 	private static final String[] OPERATORS = { "<=", "<", ">=", ">", "==", "!=" };
 
@@ -458,18 +458,18 @@ public class Stock {
 
 	public boolean applyCentFilter(int cent) {
 
-		return (low20Percent > cent);
+		return (low10Percent > cent);
 	}
 
 	public boolean applyLtenFilter(String lten) {
 
 		if ("low".equalsIgnoreCase(lten)) {
 
-			return Math.abs(low20Percent) < Math.abs(high20Percent);
+			return Math.abs(low10Percent) < Math.abs(high10Percent);
 
 		} else if ("high".equalsIgnoreCase(lten)) {
 
-			return Math.abs(low20Percent) > Math.abs(high20Percent);
+			return Math.abs(low10Percent) > Math.abs(high10Percent);
 
 		} else {
 
@@ -623,19 +623,19 @@ public class Stock {
 
 		} else if (KEYS[1].equals(key)) {
 
-			return getLow20();
+			return getLow10();
 
 		} else if (KEYS[2].equals(key)) {
 
-			return getHigh20();
+			return getHigh10();
 
 		} else if (KEYS[3].equals(key)) {
 
-			return getLow20Percent();
+			return getLow10Percent();
 
 		} else if (KEYS[4].equals(key)) {
 
-			return getHigh20Percent();
+			return getHigh10Percent();
 
 		} else if (KEYS[5].equals(key)) {
 
@@ -721,11 +721,11 @@ public class Stock {
 
 		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", index, this.symbol,
 				toPrintableLow(0), round(this.now), toPrintableHigh(0), round(this.pricage),
-				getPrintableData(round(this.nowPercent)), round(this.lowHighDiff), round(this.sma10), round(getSupt()),
-				round(getRest()), getPrintableData(round(this.low10Percent)),
-				getPrintableData(round(this.high10Percent)), getPrintableData(round(this.lowHighDiffPercent)),
-				getPrintableData(round(this.volumeChangePercent)), volumeRank(), priceRank(), getSmar(),
-				round(getSuptPercent()), round(getRestPercent()), round(getSrdif()));
+				getPrintableData(round(this.nowPercent)), round(this.lowHighDiff), round(getSupt()), round(getRest()),
+				round(getSuptPercent()), round(getRestPercent()), round(getSrdif()), getSmar(),
+				getPrintableData(round(this.low10Percent)), getPrintableData(round(this.high10Percent)),
+				getPrintableData(round(this.lowHighDiffPercent)), getPrintableData(round(this.volumeChangePercent)),
+				volumeRank(), priceRank(), this.symbol);
 
 	}
 

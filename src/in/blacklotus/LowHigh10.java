@@ -67,7 +67,7 @@ public class LowHigh10 {
 	private static final String[] SORT_KEYS = { "PRICE", "LOW10", "HIGH10", "%LOW10", "%HIGH10", "%TODAY", "%LOHIDIF",
 			"PriR", "VolR", "SMAR" };
 
-	private static final String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%NOW,$LOHIDIF,SMA10,SUPT,REST,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,VolR,PriR,SMAR,%SUPT,%REST,SRDIF";
+	private static final String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%NOW,$LOHIDIF,SUPT,REST,%SUPT,%REST,SRDIF,SURE,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,VolR,PriR,TICKER";
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
@@ -649,11 +649,11 @@ public class LowHigh10 {
 
 			stock.setSma10(SMA10(closeValues));
 
-			stock.setSmar(SMAR(stock.getNow(), stock.getSma10()));
-			
 			stock.setSupt(SUPT(closeValues, SURE));
 			
 			stock.setRest(REST(closeValues, SURE));
+			
+			stock.setSmar(SMAR(stock.getNow(), stock.getSupt(), stock.getRest()));
 			
 			stock.calculateSuptPercenttage();
 			
@@ -696,19 +696,26 @@ public class LowHigh10 {
 		return sum / count;
 	}
 
-	private static String SMAR(Double now, double SMA10) {
+	private static String SMAR(Double now, double SUPT, double REST) {
 
-		if (now > SMA10) {
+		if (now > SUPT) {
 
-			return "above";
+			return "Above";
 
-		} else if (now < SMA10) {
+		} else if (now < SUPT) {
 
-			return "below";
+			return "Below";
 
 		} else {
 
-			return "flat";
+			if(now > REST) {
+				
+				return "Resist";
+			
+			} else {
+				
+				return " ";
+			}
 		}
 	}
 	
@@ -904,7 +911,7 @@ public class LowHigh10 {
 				@Override
 				public int compare(Stock s1, Stock s2) {
 
-					return Double.compare(s1.getLow20(), s2.getLow20());
+					return Double.compare(s1.getLow10(), s2.getLow10());
 				}
 			};
 
@@ -915,7 +922,7 @@ public class LowHigh10 {
 				@Override
 				public int compare(Stock s1, Stock s2) {
 
-					return Double.compare(s1.getHigh20(), s2.getHigh20());
+					return Double.compare(s1.getHigh10(), s2.getHigh10());
 				}
 			};
 
@@ -926,7 +933,7 @@ public class LowHigh10 {
 				@Override
 				public int compare(Stock s1, Stock s2) {
 
-					return Double.compare(s1.getLow20Percent(), s2.getLow20Percent());
+					return Double.compare(s1.getLow10Percent(), s2.getLow10Percent());
 				}
 			};
 
@@ -937,7 +944,7 @@ public class LowHigh10 {
 				@Override
 				public int compare(Stock s1, Stock s2) {
 
-					return Double.compare(s1.getHigh20Percent(), s2.getHigh20Percent());
+					return Double.compare(s1.getHigh10Percent(), s2.getHigh10Percent());
 				}
 			};
 

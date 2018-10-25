@@ -325,22 +325,21 @@ public class PriceTrend extends Stock {
 						this.getSymbol(), this.trends.get(i).toPrintableLow(i), this.trends.get(i).toPrintableHigh(i),
 						this.trends.get(i).toPrintableString(), this.trends.get(i).toPrintablePriceChange(),
 						this.trends.get(i).toPrintablePriceChangePercent(), round(this.getLowHighDiff()),
-						round(this.getSma10()), getPrintableData(round(this.getLow10Percent())),
+						round(this.getSupt()), round(this.getRest()), round(this.getSuptPercent()),
+						round(this.getRestPercent()), round(this.getSrdif()), getSmar(),
+						getPrintableData(round(this.getLow10Percent())),
 						getPrintableData(round(this.getHigh10Percent())),
 						Utils.formattedVolume(this.trends.get(i).getVolume()),
 						this.trends.get(i).toPrintableVolumeChangePercent(), this.trends.get(i).getVolumeRank(),
-						this.trends.get(i).getPriceRank(), this.trends.get(i).getDayRank(), this.getSmar(),
-						round(this.getSupt()), round(this.getRest()), round(this.getSuptPercent()),
-						round(this.getRestPercent()), round(this.getSrdif()));
+						this.trends.get(i).getPriceRank(), this.trends.get(i).getDayRank(), this.getSymbol());
 			} else {
 
 				tmp = String.format("%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s", " ", " ",
 						this.trends.get(i).toPrintableLow(i), this.trends.get(i).toPrintableHigh(i),
 						this.trends.get(i).toPrintableString(), this.trends.get(i).toPrintablePriceChange(),
-						this.trends.get(i).toPrintablePriceChangePercent(), " ", " ", " ", " ",
+						this.trends.get(i).toPrintablePriceChangePercent(), " ", " ", " ", " ", " ", " ", " ", " ", " ",
 						Utils.formattedVolume(this.trends.get(i).getVolume()),
-						this.trends.get(i).toPrintableVolumeChangePercent(), " ", " ", " ", " ", " ", " ", " ", " ",
-						" ");
+						this.trends.get(i).toPrintableVolumeChangePercent(), " ", " ", " ", " ");
 			}
 
 			printableTrendsList.add(tmp);

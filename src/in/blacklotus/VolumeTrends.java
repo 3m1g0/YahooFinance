@@ -214,8 +214,8 @@ public class VolumeTrends {
 		processing = false;
 
 		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", "PRICE", "HIGH10/20", "$PRICAGE", "%PRICAGE",
-				"$LOHIDIF", "SMA10", "%LOW10", "%HIGH10", "VOLUME", "%VOLCAGE", "VolR", "PriR", "SMAR", "SUPT",
-				"REST", "%SUPT", "%REST", "SRDIF" };
+				"$LOHIDIF", "SUPT", "REST", "%SUPT", "%REST", "SRDIF", "SURE", "%LOW10", "%HIGH10", "VOLUME",
+				"%VOLCAGE", "VolR", "PriR", "TICKER" };
 
 		List<String[]> tmp = new ArrayList<>();
 
@@ -374,11 +374,11 @@ public class VolumeTrends {
 
 			trend.setSma10(SMA10(closeValues));
 
-			trend.setSmar(SMAR(trend.getNow(), trend.getSma10()));
-
 			trend.setSupt(SUPT(closeValues, SURE));
 
 			trend.setRest(REST(closeValues, SURE));
+
+			trend.setSmar(SMAR(trend.getNow(), trend.getSupt(), trend.getRest()));
 
 			trend.calculateSuptPercenttage();
 
@@ -429,19 +429,26 @@ public class VolumeTrends {
 		return sum / count;
 	}
 
-	private static String SMAR(Double now, double SMA10) {
+	private static String SMAR(Double now, double SUPT, double REST) {
 
-		if (now > SMA10) {
+		if (now > SUPT) {
 
-			return "above";
+			return "Above";
 
-		} else if (now < SMA10) {
+		} else if (now < SUPT) {
 
-			return "below";
+			return "Below";
 
 		} else {
 
-			return "flat";
+			if (now > REST) {
+
+				return "Resist";
+
+			} else {
+
+				return " ";
+			}
 		}
 	}
 
