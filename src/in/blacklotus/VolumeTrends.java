@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -38,7 +39,11 @@ public class VolumeTrends {
 
 	private static String TREND = null;
 
+	private static String SMAR = null;
+
 	private static int TREND_COUNT = 2;
+
+	private static int SURE = 10;
 
 	private static double VOLUME_DIFF = 0;
 
@@ -91,6 +96,23 @@ public class VolumeTrends {
 		if (params.containsKey("trend")) {
 
 			TREND = params.get("trend").get(0);
+		}
+
+		if (params.containsKey("smar")) {
+
+			SMAR = params.get("smar").get(0);
+		}
+
+		if (params.containsKey("sure")) {
+
+			try {
+
+				SURE = Integer.parseInt(params.get("sure").get(0));
+
+			} catch (NumberFormatException e) {
+
+				System.out.println("***   Invalid SURE value. Proceeding with default value 10   ***");
+			}
 		}
 
 		if (params.containsKey("symbol")) {
@@ -162,10 +184,20 @@ public class VolumeTrends {
 
 				if (trendDetail != null) {
 
-					if (trendDetail.isValidVolumeTrend(TREND_COUNT)) {
+					boolean filter = true;
+
+					filter = filter && trendDetail.isValidVolumeTrend(TREND_COUNT);
+
+					if (SMAR != null) {
+
+						filter = filter && trendDetail.applySMARFilter(SMAR);
+					}
+
+					if (filter) {
 
 						processedTrendList.add(trendDetail);
 					}
+
 				}
 			} catch (Exception e) {
 
@@ -181,8 +213,9 @@ public class VolumeTrends {
 
 		processing = false;
 
-		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", "HIGH10/20", "PRICE", "$PRICAGE",
-				"%PRICAGE", "VOLUME", "%VOLCAGE", "VolR", "PriR" };
+		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", "PRICE", "HIGH10/20", "$PRICAGE", "%PRICAGE",
+				"$LOHIDIF", "SMA10", "%LOW10", "%HIGH10", "VOLUME", "%VOLCAGE", "VolR", "PriR", "SMAR", "SUPT",
+				"REST", "%SUPT", "%REST", "SRDIF" };
 
 		List<String[]> tmp = new ArrayList<>();
 
@@ -209,7 +242,7 @@ public class VolumeTrends {
 		}
 
 		for (int i = 0; i < processedTrendList.size(); i++) {
-			
+
 			String[] printableVolumes = processedTrendList.get(i).toPrintableStrings(i + 1, VOLUME_DIFF);
 
 			for (int j = 0; j < printableVolumes.length; j++) {
@@ -335,7 +368,23 @@ public class VolumeTrends {
 
 			trend.calculateLow20Percenttage();
 
-			trend.calculateMove();
+			trend.calculateLowHighDiff();
+
+			trend.calculateLowHighDiffPercent();
+
+			trend.setSma10(SMA10(closeValues));
+
+			trend.setSmar(SMAR(trend.getNow(), trend.getSma10()));
+
+			trend.setSupt(SUPT(closeValues, SURE));
+
+			trend.setRest(REST(closeValues, SURE));
+
+			trend.calculateSuptPercenttage();
+
+			trend.calculatRestPercenttage();
+
+			trend.calculateSRDiff();
 
 			trend.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
@@ -357,6 +406,103 @@ public class VolumeTrends {
 		}
 
 		return trend;
+	}
+
+	private static double SMA10(Double[] closeValues) {
+
+		double sum = 0;
+
+		int count = 0;
+
+		while (count < 10) {
+
+			if (closeValues.length - count - 2 < 0) {
+
+				break;
+			}
+
+			sum += closeValues[closeValues.length - count - 2];
+
+			count++;
+		}
+
+		return sum / count;
+	}
+
+	private static String SMAR(Double now, double SMA10) {
+
+		if (now > SMA10) {
+
+			return "above";
+
+		} else if (now < SMA10) {
+
+			return "below";
+
+		} else {
+
+			return "flat";
+		}
+	}
+
+	private static double SUPT(Double[] closeValues, int sure) {
+
+		ArrayList<Double> sortedValues = new ArrayList<>();
+
+		int count = 0;
+
+		while (count < sure) {
+
+			if (closeValues.length - count - 2 < 0) {
+
+				break;
+			}
+
+			sortedValues.add(closeValues[closeValues.length - count - 2]);
+
+			count++;
+		}
+
+		Collections.sort(sortedValues);
+
+		Double sum = Double.valueOf(0);
+
+		for (int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+
+			sum += sortedValues.get(i);
+		}
+
+		return sum / Math.min(sortedValues.size(), 4);
+	}
+
+	private static double REST(Double[] closeValues, int sure) {
+
+		ArrayList<Double> sortedValues = new ArrayList<>();
+
+		int count = 0;
+
+		while (count < sure) {
+
+			if (closeValues.length - count - 2 < 0) {
+
+				break;
+			}
+
+			sortedValues.add(closeValues[closeValues.length - count - 2]);
+
+			count++;
+		}
+
+		Collections.sort(sortedValues);
+
+		Double sum = Double.valueOf(0);
+
+		for (int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+
+			sum += sortedValues.get(sortedValues.size() - i - 1);
+		}
+
+		return sum / Math.min(sortedValues.size(), 4);
 	}
 
 	private static List<VolumeTrendData> getVolumeTrend(Double closeValues[], Double low10, Double low20,
@@ -386,11 +532,11 @@ public class VolumeTrends {
 
 		return values;
 	}
-	
+
 	private static Comparator<VolumeTrend> getComparatorForKey(String key) {
 
 		if (key.equalsIgnoreCase(SORT_KEYS[0])) {
-			
+
 			return new Comparator<VolumeTrend>() {
 
 				@Override
@@ -401,7 +547,7 @@ public class VolumeTrends {
 			};
 
 		} else if (key.equalsIgnoreCase(SORT_KEYS[1])) {
-			
+
 			return new Comparator<VolumeTrend>() {
 
 				@Override

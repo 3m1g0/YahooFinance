@@ -96,9 +96,7 @@ public class Utils {
 		return sb.toString();
 	}
 
-	public static void sendEmail(String body) {
-
-		String to = "gopiparimi@gmail.com";
+	public static void sendEmail(String body, String from, String pwd, String to) {
 
 		Properties props = new Properties();
 
@@ -116,7 +114,7 @@ public class Utils {
 
 			protected PasswordAuthentication getPasswordAuthentication() {
 
-				return new PasswordAuthentication("nadopicks@gmail.com", "IpikTradePi*");
+				return new PasswordAuthentication(from, pwd);
 			}
 		});
 
@@ -164,11 +162,17 @@ public class Utils {
 	public static void displayTray(String[] headers, String[][] data) {
 
 		EventQueue.invokeLater(new Runnable() {
+			
 			public void run() {
+			
 				try {
+				
 					YahooFinanceApp window = new YahooFinanceApp();
+					
 					window.show(headers, data);
+				
 				} catch (Exception e) {
+				
 					e.printStackTrace();
 				}
 			}
@@ -424,7 +428,7 @@ public class Utils {
 
 			stock.calculateLow20Percenttage();
 
-			stock.calculateMove();
+			stock.calculateLowHighDiffPercent();
 
 			stock.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
@@ -534,7 +538,7 @@ public class Utils {
 
 			trend.calculateLow20Percenttage();
 
-			trend.calculateMove();
+			trend.calculateLowHighDiffPercent();
 
 			trend.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
@@ -550,7 +554,7 @@ public class Utils {
 		return trend;
 	}
 
-	public static int getHighIndex(Double[] data, int NO_VALUES) {
+	public static int getHighIndex(Double[] data, int mCount) {
 
 		long count = 0;
 
@@ -558,7 +562,7 @@ public class Utils {
 
 		int index = data.length - 2;
 
-		while (index > -1 && count < NO_VALUES) {
+		while (index > -1 && count < mCount) {
 
 			if (data[index] == null) {
 
@@ -581,7 +585,7 @@ public class Utils {
 		return max;
 	}
 
-	public static int getLowIndex(Double[] data, int NO_VALUES) {
+	public static int getLowIndex(Double[] data, int mCount) {
 
 		int count = 0;
 
@@ -589,7 +593,7 @@ public class Utils {
 
 		int index = data.length - 2;
 
-		while (index > -1 && count < NO_VALUES) {
+		while (index > -1 && count < mCount) {
 
 			if (data[index] == null) {
 

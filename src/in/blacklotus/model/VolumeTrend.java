@@ -373,21 +373,26 @@ public class VolumeTrend extends Stock {
 
 				if (printableTrendsList.isEmpty()) {
 
-					tmp = String.format("%d_%s_%s_%s_%s_%s_%d_%s_%s_%s_%d", index, this.getSymbol(),
-							this.trends.get(i).toPrintableLow(i), this.trends.get(i).toPrintableHigh(i),
-							this.trends.get(i).toPrintableString(), this.trends.get(i).toPrintablePriceChange(),
-							this.trends.get(i).toPrintablePriceChangePercent(),
+					tmp = String.format("%d_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%d_%d_%s_%s_%s_%s_%s_%s", index,
+							this.getSymbol(), this.trends.get(i).toPrintableLow(i),
+							this.trends.get(i).toPrintableString(), this.trends.get(i).toPrintableHigh(i),
+							this.trends.get(i).toPrintablePriceChange(),
+							this.trends.get(i).toPrintablePriceChangePercent(), round(this.getLowHighDiff()),
+							round(this.getSma10()), getPrintableData(round(this.getLow10Percent())),
+							getPrintableData(round(this.getHigh10Percent())),
 							Utils.formattedVolume(this.trends.get(i).getVolume()),
 							this.trends.get(i).toPrintableVolumeChangePercent(), this.trends.get(i).getVolumeRank(),
-							this.getRankForPricePercentDiff(this.trends.get(i).getPriceDiffPercent()));
+							this.getRankForPricePercentDiff(this.trends.get(i).getPriceDiffPercent()), this.getSmar(),
+							round(this.getSupt()), round(this.getRest()), round(this.getSuptPercent()),
+							round(this.getRestPercent()), round(this.getSrdif()));
 				} else {
 
-					tmp = String.format("%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s", " ", " ",
-							this.trends.get(i).toPrintableLow(i), this.trends.get(i).toPrintableHigh(i),
-							this.trends.get(i).toPrintableString(), this.trends.get(i).toPrintablePriceChange(),
-							this.trends.get(i).toPrintablePriceChangePercent(),
+					tmp = String.format("%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s", " ", " ",
+							this.trends.get(i).toPrintableLow(i), this.trends.get(i).toPrintableString(),
+							this.trends.get(i).toPrintableHigh(i), this.trends.get(i).toPrintablePriceChange(),
+							this.trends.get(i).toPrintablePriceChangePercent(), " ", " ", " ", " ",
 							Utils.formattedVolume(this.trends.get(i).getVolume()),
-							this.trends.get(i).toPrintableVolumeChangePercent(), " ", " ");
+							this.trends.get(i).toPrintableVolumeChangePercent(), " ", " ", " ", " ", " ", " ", " ", " ");
 				}
 
 				printableTrendsList.add(tmp);
@@ -396,8 +401,8 @@ public class VolumeTrend extends Stock {
 
 		if (!printableTrendsList.isEmpty()) {
 
-			printableTrendsList.add(String.format("%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s", " ", " ", " ", " ", " ", " ", " ",
-					" ", " ", " ", " ", " "));
+			printableTrendsList.add(String.format("%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s", " ", " ",
+					" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "));
 		}
 
 		return printableTrendsList.toArray(new String[] {});

@@ -59,7 +59,23 @@ public class Stock {
 
 	private double volumeChangePercent;
 
-	private double move;
+	private double lowHighDiff;
+
+	private double lowHighDiffPercent;
+
+	private double sma10;
+
+	private double supt;
+
+	private double rest;
+
+	private String smar;
+
+	private double suptPercent;
+
+	private double restPercent;
+
+	private double srdif;
 
 	protected SimpleDateFormat sdf;
 
@@ -90,8 +106,24 @@ public class Stock {
 		this.low20Percent = (this.now - this.low20) / this.low20 * 100;
 	}
 
-	public void calculateMove() {
-		this.move = (this.high20 - this.low20) / this.now * 100;
+	public void calculateLowHighDiff() {
+		this.lowHighDiff = (this.high10 - this.low10);
+	}
+
+	public void calculateLowHighDiffPercent() {
+		this.lowHighDiffPercent = (this.high10 - this.low10) / this.now * 100;
+	}
+
+	public void calculateSuptPercenttage() {
+		this.suptPercent = (this.now - this.supt) / this.now * 100;
+	}
+
+	public void calculatRestPercenttage() {
+		this.restPercent = (this.now - this.rest) / this.now * 100;
+	}
+
+	public void calculateSRDiff() {
+		this.srdif = (this.supt - this.rest);
 	}
 
 	public String getCurrency() {
@@ -266,12 +298,76 @@ public class Stock {
 		this.volumeChangePercent = differ;
 	}
 
-	public double getMove() {
-		return move;
+	public double getLowHighDiff() {
+		return lowHighDiff;
 	}
 
-	public void setMove(double move) {
-		this.move = move;
+	public void setLowHighDiff(double lowHighDiff) {
+		this.lowHighDiff = lowHighDiff;
+	}
+
+	public double getLowHighDiffPercent() {
+		return lowHighDiffPercent;
+	}
+
+	public void setLowHighDiffPercent(double move) {
+		this.lowHighDiffPercent = move;
+	}
+
+	public double getSma10() {
+		return sma10;
+	}
+
+	public void setSma10(double sma10) {
+		this.sma10 = sma10;
+	}
+
+	public double getSupt() {
+		return supt;
+	}
+
+	public void setSupt(double supt) {
+		this.supt = supt;
+	}
+
+	public double getRest() {
+		return rest;
+	}
+
+	public void setRest(double rest) {
+		this.rest = rest;
+	}
+
+	public String getSmar() {
+		return smar;
+	}
+
+	public void setSmar(String smar) {
+		this.smar = smar;
+	}
+
+	public double getSuptPercent() {
+		return suptPercent;
+	}
+
+	public void setSuptPercent(double suptPercent) {
+		this.suptPercent = suptPercent;
+	}
+
+	public double getRestPercent() {
+		return restPercent;
+	}
+
+	public void setRestPercent(double restPercent) {
+		this.restPercent = restPercent;
+	}
+
+	public double getSrdif() {
+		return srdif;
+	}
+
+	public void setSrdif(double srdif) {
+		this.srdif = srdif;
 	}
 
 	public int getLow10Index() {
@@ -310,12 +406,18 @@ public class Stock {
 		return Math.round(value * 100.0) / 100.0;
 	}
 
-	private String getPrintableData(double value) {
+	protected String getPrintableData(double value) {
+
 		if (value == -9999) {
+
 			return "-";
+
 		} else if (value > 0) {
+
 			return "+" + value + "%";
+
 		} else {
+
 			return value + "%";
 		}
 	}
@@ -354,21 +456,35 @@ public class Stock {
 		return true;
 	}
 
-	public boolean applyCentFilter(int cent, String lten) {
+	public boolean applyCentFilter(int cent) {
 
-		if (low20Percent > cent) {
+		return (low20Percent > cent);
+	}
 
-			if ("low".equalsIgnoreCase(lten) && low20Percent < Math.abs(high20Percent)) {
+	public boolean applyLtenFilter(String lten) {
 
-				return true;
+		if ("low".equalsIgnoreCase(lten)) {
 
-			} else if ("high".equalsIgnoreCase(lten) && low20Percent > Math.abs(high20Percent)) {
+			return Math.abs(low20Percent) < Math.abs(high20Percent);
 
-				return true;
-			}
+		} else if ("high".equalsIgnoreCase(lten)) {
+
+			return Math.abs(low20Percent) > Math.abs(high20Percent);
+
+		} else {
+
+			return false;
 		}
+	}
 
-		return false;
+	public boolean applyLoHiDifFilter(int[] lohidif) {
+
+		return name != null && !(lowHighDiffPercent > lohidif[0] && lowHighDiffPercent < lohidif[1]);
+	}
+
+	public boolean applySMARFilter(String SMAR) {
+
+		return smar != null && SMAR.equalsIgnoreCase(smar);
 	}
 
 	public boolean applyFilter(String filter) {
@@ -527,7 +643,7 @@ public class Stock {
 
 		} else if (KEYS[6].equals(key)) {
 
-			return getMove();
+			return getLowHighDiffPercent();
 
 		} else if (KEYS[7].equals(key)) {
 
@@ -600,35 +716,37 @@ public class Stock {
 
 		if (name == null) {
 
-			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
+			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
 		}
 
-		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", index, this.symbol, toPrintableLow(0),
-				round(this.now), toPrintableHigh(0), round(this.pricage), getPrintableData(round(this.nowPercent)),
-				getPrintableData(round(this.low20Percent)), getPrintableData(round(this.high20Percent)),
-				getPrintableData(round(this.move)), getPrintableData(round(this.volumeChangePercent)), volumeRank(),
-				priceRank());
+		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", index, this.symbol,
+				toPrintableLow(0), round(this.now), toPrintableHigh(0), round(this.pricage),
+				getPrintableData(round(this.nowPercent)), round(this.lowHighDiff), round(this.sma10), round(getSupt()),
+				round(getRest()), getPrintableData(round(this.low10Percent)),
+				getPrintableData(round(this.high10Percent)), getPrintableData(round(this.lowHighDiffPercent)),
+				getPrintableData(round(this.volumeChangePercent)), volumeRank(), priceRank(), getSmar(),
+				round(getSuptPercent()), round(getRestPercent()), round(getSrdif()));
 
 	}
 
 	public String toPrintableLow(int index) {
 
-		return String.format("%s: %s", sdf.format(this.low20Date), round(this.low20));
+		return String.format("%s: %s", sdf.format(this.low10Date), round(this.low10));
 	}
 
 	public String toPrintableHigh(int index) {
 
-		return String.format("%s: %s", sdf.format(this.high20Date), round(this.high10));
+		return String.format("%s: %s", sdf.format(this.high10Date), round(this.high10));
 	}
 
 	@Override
 	public String toString() {
 
 		return String.format("%s,%.2f,%.2f,%.2f,%.2f,%d,%.2f,%.2f,%s,%s,%.2f,%.2f,%.2f", this.symbol, round(this.now),
-				round(this.low20), round(this.high20), round(this.nowPercent),
-				round(this.low20Percent), round(this.high20Percent), sdf.format(this.low20Date),
-				sdf.format(this.high20Date), round(this.move), round(this.volumeChangePercent), volumeRank(),
-				priceRank());
+				round(this.low20), round(this.high20), round(this.nowPercent), round(this.lowHighDiff),
+				round(this.low10Percent), round(this.high10Percent), sdf.format(this.low20Date),
+				sdf.format(this.high20Date), round(this.lowHighDiffPercent), round(this.volumeChangePercent),
+				volumeRank(), priceRank());
 	}
 
 }

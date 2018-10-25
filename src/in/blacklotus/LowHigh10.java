@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -48,19 +49,25 @@ public class LowHigh10 {
 	private static String TREND = null;
 
 	private static int TREND_COUNT = 3;
+	
+	private static String SMAR = null;
+	
+	private static int SURE = 10;
 
 	private static int DROP = Integer.MIN_VALUE;
 
 	private static String LTEN;
 
+	private static int[] LOHIDIF;
+
 	private static int CENT = Integer.MAX_VALUE;
 
 	private static int repeat = -1;
 
-	private static final String[] SORT_KEYS = { "NOW", "LOW10", "HIGH10", "%LOW10", "%HIGH10", "%TODAY", "%MOVE",
-			"PriR", "VolR" };
+	private static final String[] SORT_KEYS = { "PRICE", "LOW10", "HIGH10", "%LOW10", "%HIGH10", "%TODAY", "%LOHIDIF",
+			"PriR", "VolR", "SMAR" };
 
-	private static final String HEADER = "SNO,SYMBOL,LOW10,NOW,HIGH10,$PRICAGE,%(+/-)NOW,%(+/-)LOW10,%(+/-)HIGH10,%MOVE,%VOLCAGE,VolR,PriR";
+	private static final String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%NOW,$LOHIDIF,SMA10,SUPT,REST,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,VolR,PriR,SMAR,%SUPT,%REST,SRDIF";
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
@@ -112,6 +119,11 @@ public class LowHigh10 {
 
 			FILTER = params.get("filter").get(0);
 		}
+		
+		if (params.containsKey("smar")) {
+
+			SMAR = params.get("smar").get(0);
+		}
 
 		if (params.containsKey("trend")) {
 
@@ -157,6 +169,46 @@ public class LowHigh10 {
 		if (params.containsKey("lten")) {
 
 			LTEN = params.get("lten").get(0);
+		}
+
+		if (params.containsKey("lohidif")) {
+
+			List<String> temp = params.get("lohidif");
+
+			if (temp.size() == 2) {
+
+				int low = -1, high = -1;
+
+				try {
+
+					low = Integer.parseInt(temp.get(0));
+
+					high = Integer.parseInt(temp.get(1));
+
+					LOHIDIF = new int[2];
+
+					LOHIDIF[0] = low;
+
+					LOHIDIF[1] = high;
+
+				} catch (NumberFormatException e) {
+
+					System.out.println("***   Invalid LOHIDIF value. Proceeding without filter  ***");
+				}
+			}
+
+		}
+		
+		if (params.containsKey("sure")) {
+
+			try {
+
+				SURE = Integer.parseInt(params.get("sure").get(0));
+
+			} catch (NumberFormatException e) {
+
+				System.out.println("***   Invalid SURE value. Proceeding with default value 10   ***");
+			}
 		}
 
 		if (params.containsKey("cent")) {
@@ -288,7 +340,22 @@ public class LowHigh10 {
 
 					if (CENT < Integer.MAX_VALUE) {
 
-						filter = filter && stockDetail.applyCentFilter(CENT, LTEN);
+						filter = filter && stockDetail.applyCentFilter(CENT);
+					}
+
+					if (LTEN != null) {
+
+						filter = filter && stockDetail.applyLtenFilter(LTEN);
+					}
+
+					if (LOHIDIF != null) {
+
+						filter = filter && stockDetail.applyLoHiDifFilter(LOHIDIF);
+					}
+					
+					if (SMAR != null) {
+						
+						filter = filter && stockDetail.applySMARFilter(SMAR);
 					}
 
 					if (filter) {
@@ -401,8 +468,6 @@ public class LowHigh10 {
 		}
 
 		System.out.println(FlipTableConverters.fromObjects(headers, data));
-
-		Utils.sendEmail(FlipTableConverters.fromObjects(headers, data));
 
 		Utils.displayTray(headers, data);
 	}
@@ -546,7 +611,7 @@ public class LowHigh10 {
 
 			double pricage = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null)
 					? -9999 : (stock.getNow() - closeValues[closeValues.length - 2]);
-			
+
 			stock.setPricage(pricage);
 
 			double nowPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null)
@@ -566,25 +631,41 @@ public class LowHigh10 {
 
 			stock.setHigh10Index(highValues.length - highIndex);
 
-			stock.setHigh20(highValues[highIndex]);
+			stock.setHigh10(highValues[highIndex]);
 
 			int lowIndex = getLowIndex(lowValues);
 
 			stock.setLow10Index(lowValues.length - lowIndex);
 
-			stock.setLow20(lowValues[lowIndex]);
+			stock.setLow10(lowValues[lowIndex]);
 
-			stock.calculateHigh20Percenttage();
+			stock.calculateHigh10Percenttage();
 
-			stock.calculateLow20Percenttage();
+			stock.calculateLow10Percenttage();
 
-			stock.calculateMove();
+			stock.calculateLowHighDiff();
+
+			stock.calculateLowHighDiffPercent();
+
+			stock.setSma10(SMA10(closeValues));
+
+			stock.setSmar(SMAR(stock.getNow(), stock.getSma10()));
+			
+			stock.setSupt(SUPT(closeValues, SURE));
+			
+			stock.setRest(REST(closeValues, SURE));
+			
+			stock.calculateSuptPercenttage();
+			
+			stock.calculatRestPercenttage();
+			
+			stock.calculateSRDiff();
 
 			stock.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
-			stock.setHigh20Date(new Date(timestamps[highIndex] * 1000L));
+			stock.setHigh10Date(new Date(timestamps[highIndex] * 1000L));
 
-			stock.setLow20Date(new Date(timestamps[lowIndex] * 1000L));
+			stock.setLow10Date(new Date(timestamps[lowIndex] * 1000L));
 
 		} catch (IOException e) {
 
@@ -592,6 +673,103 @@ public class LowHigh10 {
 		}
 
 		return stock;
+	}
+
+	private static double SMA10(Double[] closeValues) {
+
+		double sum = 0;
+
+		int count = 0;
+
+		while (count < 10) {
+
+			if (closeValues.length - count - 2 < 0) {
+
+				break;
+			}
+
+			sum += closeValues[closeValues.length - count - 2];
+
+			count++;
+		}
+
+		return sum / count;
+	}
+
+	private static String SMAR(Double now, double SMA10) {
+
+		if (now > SMA10) {
+
+			return "above";
+
+		} else if (now < SMA10) {
+
+			return "below";
+
+		} else {
+
+			return "flat";
+		}
+	}
+	
+	private static double SUPT(Double[] closeValues, int sure) {
+
+		ArrayList<Double> sortedValues = new ArrayList<>();
+		
+		int count = 0;
+
+		while (count < sure) {
+
+			if (closeValues.length - count - 2 < 0) {
+
+				break;
+			}
+
+			sortedValues.add(closeValues[closeValues.length - count - 2]);
+
+			count++;
+		}
+		
+		Collections.sort(sortedValues);
+		
+		Double sum = Double.valueOf(0);
+		
+		for(int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+			
+			sum += sortedValues.get(i);
+		}
+
+		return sum / Math.min(sortedValues.size(), 4);
+	}
+	
+	private static double REST(Double[] closeValues, int sure) {
+
+		ArrayList<Double> sortedValues = new ArrayList<>();
+		
+		int count = 0;
+
+		while (count < sure) {
+
+			if (closeValues.length - count - 2 < 0) {
+
+				break;
+			}
+
+			sortedValues.add(closeValues[closeValues.length - count - 2]);
+
+			count++;
+		}
+		
+		Collections.sort(sortedValues);
+		
+		Double sum = Double.valueOf(0);
+		
+		for(int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+			
+			sum += sortedValues.get(sortedValues.size() - i - 1);
+		}
+
+		return sum / Math.min(sortedValues.size(), 4);
 	}
 
 	private static PriceTrend getTrendDetails(String stockName) {
@@ -687,7 +865,7 @@ public class LowHigh10 {
 
 			trend.calculateLow20Percenttage();
 
-			trend.calculateMove();
+			trend.calculateLowHighDiffPercent();
 
 			trend.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
@@ -781,7 +959,7 @@ public class LowHigh10 {
 				@Override
 				public int compare(Stock s1, Stock s2) {
 
-					return Double.compare(s1.getMove(), s2.getMove());
+					return Double.compare(s1.getLowHighDiffPercent(), s2.getLowHighDiffPercent());
 				}
 			};
 
@@ -804,6 +982,28 @@ public class LowHigh10 {
 				public int compare(Stock s1, Stock s2) {
 
 					return Double.compare(s1.volumeRank(), s2.volumeRank());
+				}
+			};
+
+		} else if (SORT_KEYS[9].equalsIgnoreCase(key)) {
+
+			return new Comparator<Stock>() {
+
+				@Override
+				public int compare(Stock s1, Stock s2) {
+
+					if(s1.getSmar() == null) {
+						
+						return 1;
+					
+					} else if(s2.getSmar() == null) {
+						
+						return -1;
+					
+					} else {
+						
+						return s1.getSmar().compareTo(s2.getSmar());
+					}
 				}
 			};
 
@@ -951,7 +1151,7 @@ public class LowHigh10 {
 
 			generateOutputDir();
 
-			generateOutputFile("20Day_");
+			generateOutputFile("10Day_");
 
 			File file = new File(outputDir, outputFileName);
 

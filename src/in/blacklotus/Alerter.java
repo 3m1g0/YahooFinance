@@ -1,5 +1,6 @@
 package in.blacklotus;
 
+import java.awt.Toolkit;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -42,6 +43,12 @@ public class Alerter {
 	private static List<String> SORT_KEY;
 
 	private static String FILTER = null;
+	
+	private static String FROM_EMAIL = null;
+	
+	private static String FROM_EMAIL_PWD = null;
+	
+	private static String TO_EMAIL = null;
 
 	private static String REPEAT = null;
 
@@ -52,19 +59,21 @@ public class Alerter {
 	private static int DROP = Integer.MIN_VALUE;
 
 	private static String LTEN;
+	
+	private static int[] LOHIDIF;
 
 	private static int CENT = Integer.MAX_VALUE;
 
 	private static int repeat = -1;
 
-	private static final String[] SORT_KEYS = { "NOW", "LOW10", "HIGH10", "%LOW10", "%HIGH10", "%TODAY", "%MOVE",
+	private static final String[] SORT_KEYS = { "PRICE", "LOW10", "HIGH10", "%LOW10", "%HIGH10", "%TODAY", "%LOHIDIF",
 			"PriR", "VolR" };
 
-	private static final String HEADER = "SNO,SYMBOL,LOW10,NOW,HIGH10,$PRICAGE,%(+/-)NOW,%(+/-)LOW10,%(+/-)HIGH10,%MOVE,%VOLCAGE,VolR,PriR";
+	private static final String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%(+/-)NOW,$LOHIDIF,%(+/-)LOW10,%(+/-)HIGH10,%LOHIDIF,%VOLCAGE,VolR,PriR";
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
-	private static final String INPUT_SCHEDULER_FILE_NAME = "input-scheduler.csv";
+	private static final String INPUT_SCHEDULER_FILE_NAME = "alerter.csv";
 
 	private static String outputDir;
 
@@ -153,10 +162,53 @@ public class Alerter {
 				System.out.println("***   Invalid DROP value. Proceeding with default value -1   ***");
 			}
 		}
+		
+		if (params.containsKey("from")) {
+
+			FROM_EMAIL = params.get("from").get(0);
+		}
+		
+		if (params.containsKey("pwd")) {
+
+			FROM_EMAIL_PWD = params.get("pwd").get(0);
+		}
+		
+		if (params.containsKey("to")) {
+
+			TO_EMAIL = params.get("to").get(0);
+		}
 
 		if (params.containsKey("lten")) {
 
 			LTEN = params.get("lten").get(0);
+		}
+		
+		if (params.containsKey("lohidif")) {
+			
+			List<String> temp = params.get("lohidif");
+			
+			if(temp.size() == 2) {
+				
+				int low = -1, high = -1;
+				
+				try {
+
+					low = Integer.parseInt(temp.get(0));
+					
+					high = Integer.parseInt(temp.get(1));
+					
+					LOHIDIF = new int[2];
+					
+					LOHIDIF[0] = low;
+					
+					LOHIDIF[1] = high;
+
+				} catch (NumberFormatException e) {
+
+					System.out.println("***   Invalid LOHIDIF value. Proceeding without filter  ***");
+				}
+			}
+
 		}
 
 		if (params.containsKey("cent")) {
@@ -202,7 +254,9 @@ public class Alerter {
 			System.out.println(
 					"--------------------------------------------------------------------------------------------------------");
 
-			System.out.println("Please provide Stock names either as input.csv or command line arguments");
+			System.out.println("Missing alerter.csv input file");
+			
+			errorList.add("Missing alerter.csv input file");
 
 			System.out.println(
 					"--------------------------------------------------------------------------------------------------------");
@@ -288,7 +342,17 @@ public class Alerter {
 
 					if (CENT < Integer.MAX_VALUE) {
 
-						filter = filter && stockDetail.applyCentFilter(CENT, LTEN);
+						filter = filter && stockDetail.applyCentFilter(CENT);
+					}
+
+					if (LTEN != null) {
+
+						filter = filter && stockDetail.applyLtenFilter(LTEN);
+					}
+					
+					if (LOHIDIF != null) {
+
+						filter = filter && stockDetail.applyLoHiDifFilter(LOHIDIF);
 					}
 
 					if (filter) {
@@ -402,9 +466,14 @@ public class Alerter {
 
 		System.out.println(FlipTableConverters.fromObjects(headers, data));
 
-		Utils.sendEmail(FlipTableConverters.fromObjects(headers, data));
+		if(FROM_EMAIL != null && FROM_EMAIL_PWD != null && TO_EMAIL != null) {
+			
+			Utils.sendEmail(FlipTableConverters.fromObjects(headers, data), FROM_EMAIL, FROM_EMAIL_PWD, TO_EMAIL);
+		}
 
 		Utils.displayTray(headers, data);
+		
+		Toolkit.getDefaultToolkit().beep();
 	}
 
 	private static void processTrendData(List<Symbol> symbolList) {
@@ -546,7 +615,7 @@ public class Alerter {
 
 			double pricage = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null)
 					? -9999 : (stock.getNow() - closeValues[closeValues.length - 2]);
-			
+
 			stock.setPricage(pricage);
 
 			double nowPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null)
@@ -578,7 +647,9 @@ public class Alerter {
 
 			stock.calculateLow20Percenttage();
 
-			stock.calculateMove();
+			stock.calculateLowHighDiff();
+
+			stock.calculateLowHighDiffPercent();
 
 			stock.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
@@ -687,7 +758,7 @@ public class Alerter {
 
 			trend.calculateLow20Percenttage();
 
-			trend.calculateMove();
+			trend.calculateLowHighDiffPercent();
 
 			trend.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
@@ -781,7 +852,7 @@ public class Alerter {
 				@Override
 				public int compare(Stock s1, Stock s2) {
 
-					return Double.compare(s1.getMove(), s2.getMove());
+					return Double.compare(s1.getLowHighDiffPercent(), s2.getLowHighDiffPercent());
 				}
 			};
 
@@ -887,8 +958,8 @@ public class Alerter {
 		File inputFile = new File(INPUT_SCHEDULER_FILE_NAME);
 
 		if (!inputFile.exists()) {
-
-			return null;
+			
+			return new ArrayList<>();
 		}
 
 		List<Symbol> inputList = new ArrayList<>();
@@ -951,7 +1022,7 @@ public class Alerter {
 
 			generateOutputDir();
 
-			generateOutputFile("20Day_");
+			generateOutputFile("10Day_");
 
 			File file = new File(outputDir, outputFileName);
 
