@@ -49,9 +49,9 @@ public class LowHigh10 {
 	private static String TREND = null;
 
 	private static int TREND_COUNT = 3;
-	
+
 	private static String SMAR = null;
-	
+
 	private static int SURE = 10;
 
 	private static int DROP = Integer.MIN_VALUE;
@@ -67,7 +67,7 @@ public class LowHigh10 {
 	private static final String[] SORT_KEYS = { "PRICE", "LOW10", "HIGH10", "%LOW10", "%HIGH10", "%TODAY", "%LOHIDIF",
 			"PriR", "VolR", "SMAR" };
 
-	private static final String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%NOW,$LOHIDIF,SUPT,REST,%SUPT,%REST,SRDIF,SURE,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,VolR,PriR,TICKER";
+	private static final String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%NOW,$LOHIDIF,SUPT,REST,$SRDIF,%SUPT,%REST,SURE,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,10DCHG,%10DCHG,VolR,PriR,TICKER";
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
@@ -119,7 +119,7 @@ public class LowHigh10 {
 
 			FILTER = params.get("filter").get(0);
 		}
-		
+
 		if (params.containsKey("smar")) {
 
 			SMAR = params.get("smar").get(0);
@@ -198,7 +198,7 @@ public class LowHigh10 {
 			}
 
 		}
-		
+
 		if (params.containsKey("sure")) {
 
 			try {
@@ -352,9 +352,9 @@ public class LowHigh10 {
 
 						filter = filter && stockDetail.applyLoHiDifFilter(LOHIDIF);
 					}
-					
+
 					if (SMAR != null) {
-						
+
 						filter = filter && stockDetail.applySMARFilter(SMAR);
 					}
 
@@ -576,7 +576,15 @@ public class LowHigh10 {
 
 			String responseString = execute.body().string();
 
-			YahooResponse yahooResponse = new Gson().fromJson(responseString, YahooResponse.class);
+			YahooResponse yahooResponse;
+
+			if (NadoPicks.responseMap.get(stockName) == null) {
+
+				NadoPicks.responseMap.put(stockName, new Gson().fromJson(responseString, YahooResponse.class));
+
+			}
+
+			yahooResponse = NadoPicks.responseMap.get(stockName);
 
 			metaData = yahooResponse.getChart().getResult()[0].getMeta();
 
@@ -610,16 +618,31 @@ public class LowHigh10 {
 			stock.setVolume(volumes[volumes.length - 1]);
 
 			double pricage = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null)
-					? -9999 : (stock.getNow() - closeValues[closeValues.length - 2]);
+					? -Integer.MIN_VALUE : (stock.getNow() - closeValues[closeValues.length - 2]);
 
 			stock.setPricage(pricage);
 
 			double nowPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null)
-					? -9999
+					? -Integer.MIN_VALUE
 					: (stock.getNow() - closeValues[closeValues.length - 2]) * 100
 							/ closeValues[closeValues.length - 2];
 
 			stock.setNowPercent(nowPercent);
+
+			double dchg = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null
+					|| NO_VALUES < 10 || closeValues.length < 10 || closeValues[closeValues.length - 10] == null)
+							? Integer.MIN_VALUE
+							: (closeValues[closeValues.length - 2] - closeValues[closeValues.length - 10]);
+
+			stock.setDchg10(dchg);
+
+			double dchgPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null
+					|| NO_VALUES < 10 || closeValues.length < 10 || closeValues[closeValues.length - 10] == null)
+							? Integer.MIN_VALUE
+							: (closeValues[closeValues.length - 2] - closeValues[closeValues.length - 10]) * 100
+									/ closeValues[closeValues.length - 2];
+
+			stock.setDchgPercent(dchgPercent);
 
 			double volumeChangePercent = (NO_VALUES < 2 || volumes.length < 2
 					|| volumes[closeValues.length - 2] == null) ? -9999
@@ -650,15 +673,15 @@ public class LowHigh10 {
 			stock.setSma10(SMA10(closeValues));
 
 			stock.setSupt(SUPT(closeValues, SURE));
-			
+
 			stock.setRest(REST(closeValues, SURE));
-			
+
 			stock.setSmar(SMAR(stock.getNow(), stock.getSupt(), stock.getRest()));
-			
+
 			stock.calculateSuptPercenttage();
-			
+
 			stock.calculatRestPercenttage();
-			
+
 			stock.calculateSRDiff();
 
 			stock.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
@@ -708,21 +731,21 @@ public class LowHigh10 {
 
 		} else {
 
-			if(now > REST) {
-				
-				return "Resist";
-			
+			if (now > REST) {
+
+				return "Match | Resist";
+
 			} else {
-				
-				return " ";
+
+				return "Match";
 			}
 		}
 	}
-	
+
 	private static double SUPT(Double[] closeValues, int sure) {
 
 		ArrayList<Double> sortedValues = new ArrayList<>();
-		
+
 		int count = 0;
 
 		while (count < sure) {
@@ -736,23 +759,23 @@ public class LowHigh10 {
 
 			count++;
 		}
-		
+
 		Collections.sort(sortedValues);
-		
+
 		Double sum = Double.valueOf(0);
-		
-		for(int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
-			
+
+		for (int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+
 			sum += sortedValues.get(i);
 		}
 
 		return sum / Math.min(sortedValues.size(), 4);
 	}
-	
+
 	private static double REST(Double[] closeValues, int sure) {
 
 		ArrayList<Double> sortedValues = new ArrayList<>();
-		
+
 		int count = 0;
 
 		while (count < sure) {
@@ -766,13 +789,13 @@ public class LowHigh10 {
 
 			count++;
 		}
-		
+
 		Collections.sort(sortedValues);
-		
+
 		Double sum = Double.valueOf(0);
-		
-		for(int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
-			
+
+		for (int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+
 			sum += sortedValues.get(sortedValues.size() - i - 1);
 		}
 
@@ -999,16 +1022,16 @@ public class LowHigh10 {
 				@Override
 				public int compare(Stock s1, Stock s2) {
 
-					if(s1.getSmar() == null) {
-						
+					if (s1.getSmar() == null) {
+
 						return 1;
-					
-					} else if(s2.getSmar() == null) {
-						
+
+					} else if (s2.getSmar() == null) {
+
 						return -1;
-					
+
 					} else {
-						
+
 						return s1.getSmar().compareTo(s2.getSmar());
 					}
 				}

@@ -214,8 +214,8 @@ public class VolumeTrends {
 		processing = false;
 
 		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", "PRICE", "HIGH10/20", "$PRICAGE", "%PRICAGE",
-				"$LOHIDIF", "SUPT", "REST", "%SUPT", "%REST", "SRDIF", "SURE", "%LOW10", "%HIGH10", "VOLUME",
-				"%VOLCAGE", "VolR", "PriR", "TICKER" };
+				"$LOHIDIF", "SUPT", "REST", "$SRDIF", "%SUPT", "%REST", "SURE", "%LOW10", "%HIGH10", "VOLUME",
+				"%VOLCAGE", "10DCHG", "%10DCHG", "VolR", "PriR", "TICKER" };
 
 		List<String[]> tmp = new ArrayList<>();
 
@@ -296,7 +296,15 @@ public class VolumeTrends {
 
 			String responseString = execute.body().string();
 
-			YahooResponse yahooResponse = new Gson().fromJson(responseString, YahooResponse.class);
+			YahooResponse yahooResponse;
+
+			if (NadoPicks.responseMap.get(stockName) == null) {
+
+				NadoPicks.responseMap.put(stockName, new Gson().fromJson(responseString, YahooResponse.class));
+
+			}
+
+			yahooResponse = NadoPicks.responseMap.get(stockName);
 
 			metaData = yahooResponse.getChart().getResult()[0].getMeta();
 
@@ -332,11 +340,26 @@ public class VolumeTrends {
 			trend.setVolume(volumes[volumes.length - 1]);
 
 			double nowPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null)
-					? -9999
+					? -Integer.MIN_VALUE
 					: (trend.getNow() - closeValues[closeValues.length - 2]) * 100
 							/ closeValues[closeValues.length - 2];
 
 			trend.setNowPercent(nowPercent);
+
+			double dchg = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null
+					|| NO_VALUES < 10 || closeValues.length < 10 || closeValues[closeValues.length - 10] == null)
+							? Integer.MIN_VALUE
+							: (closeValues[closeValues.length - 2] - closeValues[closeValues.length - 10]);
+
+			trend.setDchg10(dchg);
+
+			double dchgPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null
+					|| NO_VALUES < 10 || closeValues.length < 10 || closeValues[closeValues.length - 10] == null)
+							? Integer.MIN_VALUE
+							: (closeValues[closeValues.length - 2] - closeValues[closeValues.length - 10]) * 100
+									/ closeValues[closeValues.length - 2];
+
+			trend.setDchgPercent(dchgPercent);
 
 			double volumeChangePercent = (NO_VALUES < 2 || volumes.length < 2
 					|| volumes[closeValues.length - 2] == null) ? -9999
@@ -443,11 +466,11 @@ public class VolumeTrends {
 
 			if (now > REST) {
 
-				return "Resist";
+				return "Match | Resist";
 
 			} else {
 
-				return " ";
+				return "Match";
 			}
 		}
 	}

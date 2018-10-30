@@ -17,6 +17,8 @@ public class Stock {
 
 	private double now;
 
+	private double yesterday;
+
 	private double pricage;
 
 	private Long volume;
@@ -76,6 +78,10 @@ public class Stock {
 	private double restPercent;
 
 	private double srdif;
+
+	private double dchg10;
+
+	private double dchgPercent;
 
 	protected SimpleDateFormat sdf;
 
@@ -156,6 +162,14 @@ public class Stock {
 
 	public void setNow(double close) {
 		this.now = close;
+	}
+
+	public double getYesterday() {
+		return yesterday;
+	}
+
+	public void setYesterday(double yesterday) {
+		this.yesterday = yesterday;
 	}
 
 	public double getPricage() {
@@ -370,6 +384,22 @@ public class Stock {
 		this.srdif = srdif;
 	}
 
+	public double getDchg10() {
+		return dchg10;
+	}
+
+	public void setDchg10(double dchg10) {
+		this.dchg10 = dchg10;
+	}
+
+	public double getDchgPercent() {
+		return dchgPercent;
+	}
+
+	public void setDchgPercent(double dchgPercent) {
+		this.dchgPercent = dchgPercent;
+	}
+
 	public int getLow10Index() {
 		return low10Index;
 	}
@@ -409,6 +439,10 @@ public class Stock {
 	protected String getPrintableData(double value) {
 
 		if (value == -9999) {
+
+			return "-";
+
+		} else if (value == Integer.MIN_VALUE) {
 
 			return "-";
 
@@ -716,16 +750,17 @@ public class Stock {
 
 		if (name == null) {
 
-			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
+			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
 		}
 
-		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s", index, this.symbol,
-				toPrintableLow(0), round(this.now), toPrintableHigh(0), round(this.pricage),
-				getPrintableData(round(this.nowPercent)), round(this.lowHighDiff), round(getSupt()), round(getRest()),
-				round(getSuptPercent()), round(getRestPercent()), round(getSrdif()), getSmar(),
-				getPrintableData(round(this.low10Percent)), getPrintableData(round(this.high10Percent)),
-				getPrintableData(round(this.lowHighDiffPercent)), getPrintableData(round(this.volumeChangePercent)),
-				volumeRank(), priceRank(), this.symbol);
+		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,S:%s,R:%s,%s,%s%%,%s%%,%s,L:%s,H:%s,%s,%s,%s,%s,%s,%s,%s", index,
+				this.symbol, toPrintableLow(0), round(this.now), toPrintableHigh(0),
+				getPrintableData(round(this.pricage)), getPrintableData(round(this.nowPercent)),
+				round(this.lowHighDiff), round(getSupt()), round(getRest()), round(getSrdif()), round(getSuptPercent()),
+				round(getRestPercent()), getSmar(), getPrintableData(round(this.low10Percent)),
+				getPrintableData(round(this.high10Percent)), getPrintableData(round(this.lowHighDiffPercent)),
+				getPrintableData(round(this.volumeChangePercent)), getPrintableData(round(this.dchg10)),
+				getPrintableData(round(this.dchgPercent)), volumeRank(), priceRank(), this.symbol);
 
 	}
 
