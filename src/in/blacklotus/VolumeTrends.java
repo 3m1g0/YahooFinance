@@ -20,6 +20,7 @@ import in.blacklotus.model.Symbol;
 import in.blacklotus.model.VolumeTrend;
 import in.blacklotus.model.VolumeTrendData;
 import in.blacklotus.model.YahooResponse;
+import in.blacklotus.utils.DatabaseUtils;
 import in.blacklotus.utils.MultiComparator;
 import in.blacklotus.utils.NetworkUtils;
 import in.blacklotus.utils.Utils;
@@ -215,7 +216,7 @@ public class VolumeTrends {
 
 		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", "PRICE", "HIGH10/20", "$PRICAGE", "%PRICAGE",
 				"$LOHIDIF", "SUPT", "REST", "$SRDIF", "%SUPT", "%REST", "SURE", "%LOW10", "%HIGH10", "VOLUME",
-				"%VOLCAGE", "10DCHG", "%10DCHG", "VolR", "PriR", "TICKER" };
+				"%VOLCAGE", "TENDCHG", "%TENDCHG", "VolR", "PriR", "TICKER" };
 
 		List<String[]> tmp = new ArrayList<>();
 
@@ -261,6 +262,11 @@ public class VolumeTrends {
 		System.out.println(FlipTableConverters.fromObjects(headers, data));
 
 		writeTrendsToFile(headers, processedTrendList);
+		
+		if(NadoPicks.SAVE_TO_DATABASE) {
+			
+			DatabaseUtils.saveVolumeTrend(processedTrendList);
+		}
 	}
 
 	public static VolumeTrend getTrendDetails(String stockName) {

@@ -26,6 +26,7 @@ import in.blacklotus.model.PriceTrendData;
 import in.blacklotus.model.Stock;
 import in.blacklotus.model.Symbol;
 import in.blacklotus.model.YahooResponse;
+import in.blacklotus.utils.DatabaseUtils;
 import in.blacklotus.utils.MultiComparator;
 import in.blacklotus.utils.NetworkUtils;
 import in.blacklotus.utils.Scheduler;
@@ -67,7 +68,7 @@ public class LowHigh10 {
 	private static final String[] SORT_KEYS = { "PRICE", "LOW10", "HIGH10", "%LOW10", "%HIGH10", "%TODAY", "%LOHIDIF",
 			"PriR", "VolR", "SMAR" };
 
-	private static final String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%NOW,$LOHIDIF,SUPT,REST,$SRDIF,%SUPT,%REST,SURE,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,10DCHG,%10DCHG,VolR,PriR,TICKER";
+	private static final String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%NOW,$LOHIDIF,SUPT,REST,$SRDIF,%SUPT,%REST,SURE,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,TENDCHG,%TENDCHG,VolR,PriR,TICKER";
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
@@ -406,6 +407,11 @@ public class LowHigh10 {
 		System.out.println(FlipTableConverters.fromObjects(headers, data));
 
 		writeToFile(stocksList);
+
+		if (NadoPicks.SAVE_TO_DATABASE) {
+
+			DatabaseUtils.saveLowHigh10(stocksList);
+		}
 	}
 
 	private static void processRepeatData(List<Symbol> symbolList) {

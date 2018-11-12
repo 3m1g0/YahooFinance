@@ -82,6 +82,10 @@ public class Stock {
 	private double dchg10;
 
 	private double dchgPercent;
+	
+	private int prir;
+	
+	private int volr;
 
 	protected SimpleDateFormat sdf;
 
@@ -432,6 +436,22 @@ public class Stock {
 		this.high20Index = high20Index;
 	}
 
+	public int getPrir() {
+		return prir;
+	}
+
+	public void setPrir(int prir) {
+		this.prir = prir;
+	}
+
+	public int getVolr() {
+		return volr;
+	}
+
+	public void setVolr(int volr) {
+		this.volr = volr;
+	}
+
 	protected double round(double value) {
 		return Math.round(value * 100.0) / 100.0;
 	}
@@ -453,6 +473,26 @@ public class Stock {
 		} else {
 
 			return value + "%";
+		}
+	}
+	
+	protected String getPrintableDataValue(double value) {
+
+		if (value == -9999) {
+
+			return "-";
+
+		} else if (value == Integer.MIN_VALUE) {
+
+			return "-";
+
+		} else if (value > 0) {
+
+			return "+" + value;
+
+		} else {
+
+			return String.valueOf(value);
 		}
 	}
 
@@ -753,13 +793,13 @@ public class Stock {
 			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
 		}
 
-		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,S:%s,R:%s,%s,%s%%,%s%%,%s,L:%s,H:%s,%s,%s,%s,%s,%s,%s,%s", index,
+		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,S: %s,R: %s,%s,S: %s%%,R: %s%%,%s,L: %s,H: %s,%s,V: %s,T: %s,T: %s,%s,%s,%s", index,
 				this.symbol, toPrintableLow(0), round(this.now), toPrintableHigh(0),
-				getPrintableData(round(this.pricage)), getPrintableData(round(this.nowPercent)),
+				getPrintableDataValue(round(this.pricage)), getPrintableData(round(this.nowPercent)),
 				round(this.lowHighDiff), round(getSupt()), round(getRest()), round(getSrdif()), round(getSuptPercent()),
 				round(getRestPercent()), getSmar(), getPrintableData(round(this.low10Percent)),
 				getPrintableData(round(this.high10Percent)), getPrintableData(round(this.lowHighDiffPercent)),
-				getPrintableData(round(this.volumeChangePercent)), getPrintableData(round(this.dchg10)),
+				getPrintableData(round(this.volumeChangePercent)), getPrintableDataValue(round(this.dchg10)),
 				getPrintableData(round(this.dchgPercent)), volumeRank(), priceRank(), this.symbol);
 
 	}

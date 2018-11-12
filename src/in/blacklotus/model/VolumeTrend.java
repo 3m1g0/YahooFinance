@@ -33,7 +33,7 @@ public class VolumeTrend extends Stock {
 		this.type = type;
 	}
 
-	public List<VolumeTrendData> getTrend() {
+	public List<VolumeTrendData> getTrends() {
 		return trends;
 	}
 
@@ -309,7 +309,7 @@ public class VolumeTrend extends Stock {
 		}
 	}
 
-	private int getRankForPricePercentDiff(Double diffPercent) {
+	public int getRankForPricePercentDiff(Double diffPercent) {
 
 		if (diffPercent > 5) {
 
@@ -373,7 +373,7 @@ public class VolumeTrend extends Stock {
 
 				if (printableTrendsList.isEmpty()) {
 
-					tmp = String.format("%d_%s_%s_%s_%s_%s_%s_%s_S:%s_R:%s_%s_%s%%_%s%%_%s_L:%s_H:%s_%s_%s_%s_%s_%s_%s_%s",
+					tmp = String.format("%d_%s_%s_%s_%s_%s_%s_%s_S: %s_R: %s_%s_S: %s%%_R: %s%%_%s_L: %s_H: %s_%s_%s_T: %s_T: %s_%s_%s_%s",
 							index, this.getSymbol(), this.trends.get(i).toPrintableLow(i),
 							this.trends.get(i).toPrintableString(), this.trends.get(i).toPrintableHigh(i),
 							this.trends.get(i).toPrintablePriceChange(),
@@ -384,7 +384,7 @@ public class VolumeTrend extends Stock {
 							getPrintableData(round(this.getHigh10Percent())),
 							Utils.formattedVolume(this.trends.get(i).getVolume()),
 							this.trends.get(i).toPrintableVolumeChangePercent(),
-							getPrintableData(round(this.getDchg10())), getPrintableData(round(this.getDchgPercent())),
+							getPrintableDataValue(round(this.getDchg10())), getPrintableData(round(this.getDchgPercent())),
 							this.trends.get(i).getVolumeRank(),
 							this.getRankForPricePercentDiff(this.trends.get(i).getPriceDiffPercent()), getSymbol());
 				} else {

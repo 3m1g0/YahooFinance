@@ -14,11 +14,15 @@ public class NadoPicks {
 
 	public static final Map<String, YahooResponse> responseMap = new LinkedHashMap<>();
 
-	private static final String INPUT_FILE_NAME = "unified_input.csv";
+	public static boolean SAVE_TO_DATABASE = false;
+
+	private static final String INPUT_FILE_NAME = "unifier.csv";
 
 	public static void main(String[] args) {
 
 		Map<String, String[]> inputMap = readInput();
+
+		SAVE_TO_DATABASE = true;
 
 		for (String key : inputMap.keySet()) {
 
