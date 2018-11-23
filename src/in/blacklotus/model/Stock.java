@@ -793,7 +793,7 @@ public class Stock {
 			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
 		}
 
-		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,S: %s,R: %s,%s,S: %s%%,R: %s%%,%s,L: %s,H: %s,%s,V: %s,T: %s,T: %s,%s,%s,%s", index,
+		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,S: %s,R: %s,%s,S: %s%%,R: %s%%,%s,L: %s,H: %s,%s,V: %s,T: %s,T: %s,V: %s,P: %s,%s", index,
 				this.symbol, toPrintableLow(0), round(this.now), toPrintableHigh(0),
 				getPrintableDataValue(round(this.pricage)), getPrintableData(round(this.nowPercent)),
 				round(this.lowHighDiff), round(getSupt()), round(getRest()), round(getSrdif()), round(getSuptPercent()),

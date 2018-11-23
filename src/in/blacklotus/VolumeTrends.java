@@ -178,7 +178,7 @@ public class VolumeTrends {
 		for (int i = 0; i < symbolList.size(); i++) {
 
 			Symbol symbol = symbolList.get(i);
-
+			
 			try {
 
 				VolumeTrend trendDetail = getTrendDetails(symbol.getName());
@@ -197,6 +197,8 @@ public class VolumeTrends {
 					if (filter) {
 
 						processedTrendList.add(trendDetail);
+						
+						Utils.addToDuplicates(symbol.getName());
 					}
 
 				}
@@ -263,7 +265,7 @@ public class VolumeTrends {
 
 		writeTrendsToFile(headers, processedTrendList);
 		
-		if(NadoPicks.SAVE_TO_DATABASE) {
+		if(Unifier.SAVE_TO_DATABASE) {
 			
 			DatabaseUtils.saveVolumeTrend(processedTrendList);
 		}
@@ -304,13 +306,13 @@ public class VolumeTrends {
 
 			YahooResponse yahooResponse;
 
-			if (NadoPicks.responseMap.get(stockName) == null) {
+			if (Unifier.responseMap.get(stockName) == null) {
 
-				NadoPicks.responseMap.put(stockName, new Gson().fromJson(responseString, YahooResponse.class));
+				Unifier.responseMap.put(stockName, new Gson().fromJson(responseString, YahooResponse.class));
 
 			}
 
-			yahooResponse = NadoPicks.responseMap.get(stockName);
+			yahooResponse = Unifier.responseMap.get(stockName);
 
 			metaData = yahooResponse.getChart().getResult()[0].getMeta();
 

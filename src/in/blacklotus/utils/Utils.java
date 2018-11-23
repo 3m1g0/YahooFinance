@@ -36,6 +36,7 @@ import javax.mail.internet.MimeMessage;
 
 import com.google.gson.Gson;
 
+import in.blacklotus.Unifier;
 import in.blacklotus.YahooFinanceApp;
 import in.blacklotus.api.YahooFinanceAPI;
 import in.blacklotus.model.Metadata;
@@ -162,17 +163,17 @@ public class Utils {
 	public static void displayTray(String[] headers, String[][] data) {
 
 		EventQueue.invokeLater(new Runnable() {
-			
+
 			public void run() {
-			
+
 				try {
-				
+
 					YahooFinanceApp window = new YahooFinanceApp();
-					
+
 					window.show(headers, data);
-				
+
 				} catch (Exception e) {
-				
+
 					e.printStackTrace();
 				}
 			}
@@ -248,11 +249,11 @@ public class Utils {
 
 		return false;
 	}
-	
+
 	public static List<String> getValidSortKeys(List<String> keys, String[] SORT_KEYS) {
-		
+
 		List<String> mKeys = new ArrayList<>();
-		
+
 		String excludes = "";
 
 		for (String k : keys) {
@@ -260,20 +261,20 @@ public class Utils {
 			if (isValidSortKey(k, SORT_KEYS))
 
 				mKeys.add(k);
-			
+
 			else {
-				
+
 				excludes += k + " ";
 			}
 		}
-		
-		if(!"".equals(excludes)) {
-			
+
+		if (!"".equals(excludes)) {
+
 			System.out.println("***   Sort KEY must be one of " + Arrays.toString(SORT_KEYS) + "  ***");
 
 			System.out.println("***   Proceeding without " + excludes + "  ***");
 		}
-		
+
 		return mKeys;
 	}
 
@@ -408,12 +409,11 @@ public class Utils {
 							/ closeValues[closeValues.length - 2];
 
 			stock.setNowPercent(nowPercent);
-			
-			double volumeChangePercent = (NO_VALUES < 2 || volumes.length < 2 || volumes[closeValues.length - 2] == null)
-					? -9999
-					: (stock.getVolume() - volumes[volumes.length - 2]) * 100
-							/ volumes[volumes.length - 2];
-			
+
+			double volumeChangePercent = (NO_VALUES < 2 || volumes.length < 2
+					|| volumes[closeValues.length - 2] == null) ? -9999
+							: (stock.getVolume() - volumes[volumes.length - 2]) * 100 / volumes[volumes.length - 2];
+
 			stock.setVolumeChangePercent(volumeChangePercent);
 
 			int highIndex = getHighIndex(highValues, NO_VALUES);
@@ -634,7 +634,7 @@ public class Utils {
 
 	public static File generateOutputFile(String type, File outputDir) {
 
-		SimpleDateFormat sdf = new SimpleDateFormat("MMMM_dd_yyyy_hh_mm_aaa");
+		SimpleDateFormat sdf = new SimpleDateFormat("MMMM_dd_yyyy_hh_mm_ss_aaa");
 
 		String outputFileName = type + sdf.format(new Date()) + ".csv";
 
@@ -678,6 +678,47 @@ public class Utils {
 		} catch (IOException e) {
 
 			e.printStackTrace();
+		}
+	}
+
+	public static void writeDuplicatesToFile(HashMap<String, Integer> duplicates) {
+
+		try {
+
+			File file = generateOutputFile("dups_", generateOutputDir());
+
+			if (!file.exists()) {
+
+				file.createNewFile();
+			}
+
+			PrintWriter writer = new PrintWriter(new FileWriter(file));
+
+			for (String key : duplicates.keySet()) {
+
+				if (duplicates.get(key) > 1) {
+
+					writer.println(key + " : " + duplicates.get(key));
+				}
+			}
+
+			writer.close();
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+	}
+
+	public static void addToDuplicates(String ticker) {
+
+		if (Unifier.duplicates.containsKey(ticker)) {
+
+			Unifier.duplicates.put(ticker, Unifier.duplicates.get(ticker) + 1);
+
+		} else {
+
+			Unifier.duplicates.put(ticker, 1);
 		}
 	}
 }

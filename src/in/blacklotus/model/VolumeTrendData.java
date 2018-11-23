@@ -268,7 +268,7 @@ public class VolumeTrendData {
 
 		} else {
 
-			return String.format("%%%.2f", priceDiffPercent);
+			return String.format("%.2f%%", priceDiffPercent);
 		}
 	}
 
@@ -292,7 +292,7 @@ public class VolumeTrendData {
 
 		} else {
 
-			return String.format("V: %%%.2f", volumeDiffPercentage);
+			return String.format("V: %.2f%%", volumeDiffPercentage);
 		}
 	}
 

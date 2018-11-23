@@ -164,7 +164,7 @@ public class PriceTrends {
 		for (int i = 0; i < symbolList.size(); i++) {
 
 			Symbol symbol = symbolList.get(i);
-
+			
 			try {
 
 				PriceTrend trendDetail = getTrendDetails(symbol.getName());
@@ -183,6 +183,8 @@ public class PriceTrends {
 					if (filter) {
 
 						processedTrendList.add(trendDetail);
+						
+						Utils.addToDuplicates(symbol.getName());
 					}
 
 				}
@@ -249,7 +251,7 @@ public class PriceTrends {
 
 		writeTrendsToFile(headers, processedTrendList);
 		
-		if(NadoPicks.SAVE_TO_DATABASE) {
+		if(Unifier.SAVE_TO_DATABASE) {
 			
 			DatabaseUtils.savePriceTrend(processedTrendList, TREND.toUpperCase() + "TREND");
 		}
@@ -290,13 +292,13 @@ public class PriceTrends {
 
 			YahooResponse yahooResponse;
 
-			if (NadoPicks.responseMap.get(stockName) == null) {
+			if (Unifier.responseMap.get(stockName) == null) {
 
-				NadoPicks.responseMap.put(stockName, new Gson().fromJson(responseString, YahooResponse.class));
+				Unifier.responseMap.put(stockName, new Gson().fromJson(responseString, YahooResponse.class));
 
 			}
 
-			yahooResponse = NadoPicks.responseMap.get(stockName);
+			yahooResponse = Unifier.responseMap.get(stockName);
 
 			metaData = yahooResponse.getChart().getResult()[0].getMeta();
 

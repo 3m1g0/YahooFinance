@@ -373,7 +373,7 @@ public class VolumeTrend extends Stock {
 
 				if (printableTrendsList.isEmpty()) {
 
-					tmp = String.format("%d_%s_%s_%s_%s_%s_%s_%s_S: %s_R: %s_%s_S: %s%%_R: %s%%_%s_L: %s_H: %s_%s_%s_T: %s_T: %s_%s_%s_%s",
+					tmp = String.format("%d_%s_%s_%s_%s_%s_%s_%s_S: %s_R: %s_%s_S: %s%%_R: %s%%_%s_L: %s_H: %s_%s_%s_T: %s_T: %s_V: %s_P: %s_%s",
 							index, this.getSymbol(), this.trends.get(i).toPrintableLow(i),
 							this.trends.get(i).toPrintableString(), this.trends.get(i).toPrintableHigh(i),
 							this.trends.get(i).toPrintablePriceChange(),

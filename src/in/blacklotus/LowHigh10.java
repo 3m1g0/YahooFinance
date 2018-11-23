@@ -324,7 +324,7 @@ public class LowHigh10 {
 		for (int i = 0; i < symbolList.size(); i++) {
 
 			Symbol symbol = symbolList.get(i);
-
+			
 			try {
 				Stock stockDetail = getStockDetails(symbol.getName());
 
@@ -362,6 +362,8 @@ public class LowHigh10 {
 					if (filter) {
 
 						stocksList.add(stockDetail);
+						
+						Utils.addToDuplicates(symbol.getName());
 					}
 				}
 			} catch (Exception e) {
@@ -408,7 +410,7 @@ public class LowHigh10 {
 
 		writeToFile(stocksList);
 
-		if (NadoPicks.SAVE_TO_DATABASE) {
+		if (Unifier.SAVE_TO_DATABASE) {
 
 			DatabaseUtils.saveLowHigh10(stocksList);
 		}
@@ -584,13 +586,13 @@ public class LowHigh10 {
 
 			YahooResponse yahooResponse;
 
-			if (NadoPicks.responseMap.get(stockName) == null) {
+			if (Unifier.responseMap.get(stockName) == null) {
 
-				NadoPicks.responseMap.put(stockName, new Gson().fromJson(responseString, YahooResponse.class));
+				Unifier.responseMap.put(stockName, new Gson().fromJson(responseString, YahooResponse.class));
 
 			}
 
-			yahooResponse = NadoPicks.responseMap.get(stockName);
+			yahooResponse = Unifier.responseMap.get(stockName);
 
 			metaData = yahooResponse.getChart().getResult()[0].getMeta();
 

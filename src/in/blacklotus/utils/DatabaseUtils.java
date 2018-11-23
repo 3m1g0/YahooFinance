@@ -17,28 +17,47 @@ import in.blacklotus.model.VolumeTrendData;
 
 public class DatabaseUtils {
 
+	private static final String DATABASE_NAME = "unifier";
+
 	private static MongoClient mongoClient;
+	
+	private static boolean isDatabaseConnected = true;
 
 	private static MongoClient getInstance() {
 
 		if (mongoClient == null) {
-
+			
 			try {
 
 				mongoClient = new MongoClient();
+				
+				mongoClient.getDatabaseNames();
 
 			} catch (UnknownHostException e) {
 
-				e.printStackTrace();
+				isDatabaseConnected = false;
+				
+				mongoClient.close();
+			
+			} catch (Exception e) {
+				
+				isDatabaseConnected = false;
+				
+				mongoClient.close();
 			}
 		}
-
+		
 		return mongoClient;
 	}
 
 	public static void saveLowHigh10(List<Stock> stocksList) {
 
-		DB db = getInstance().getDB("nadopicks");
+		DB db = getInstance().getDB(DATABASE_NAME);
+		
+		if (!isDatabaseConnected) {
+
+			return;
+		}
 
 		DBCollection table = db.getCollection("lowhigh10");
 
@@ -101,10 +120,15 @@ public class DatabaseUtils {
 			table.insert(document);
 		}
 	}
-	
+
 	public static void savePriceTrend(List<PriceTrend> stocksList, String trend) {
 
-		DB db = getInstance().getDB("nadopicks");
+		DB db = getInstance().getDB(DATABASE_NAME);
+		
+		if (!isDatabaseConnected) {
+
+			return;
+		}
 
 		DBCollection table = db.getCollection("pritrend");
 
@@ -140,7 +164,7 @@ public class DatabaseUtils {
 
 					pricages[j] = round(trendData.getPriceDiff());
 
-					pricagepercents[j] =round( trendData.getPriceDiffPercent());
+					pricagepercents[j] = round(trendData.getPriceDiffPercent());
 
 					volcagepercents[j] = round(trendData.getVolumeDiffPercentage());
 				}
@@ -162,7 +186,8 @@ public class DatabaseUtils {
 
 			document.put("PriceDate", priceDates);
 
-			document.put("High10/20", new double[] { round(trends.get(0).getHigh10()), round(trends.get(0).getHigh20()) });
+			document.put("High10/20",
+					new double[] { round(trends.get(0).getHigh10()), round(trends.get(0).getHigh20()) });
 
 			document.put("High10/20Date", new Date[] { trends.get(0).getHigh10Date(), trends.get(0).getHigh20Date() });
 
@@ -201,7 +226,7 @@ public class DatabaseUtils {
 			document.put("PriceRank", trends.get(0).getPriceRank());
 
 			document.put("VolumeRank", trends.get(0).getVolumeRank());
-			
+
 			document.put("DayRank", trends.get(0).getDayRank());
 
 			table.insert(document);
@@ -210,7 +235,12 @@ public class DatabaseUtils {
 
 	public static void saveVolumeTrend(List<VolumeTrend> stocksList) {
 
-		DB db = getInstance().getDB("nadopicks");
+		DB db = getInstance().getDB(DATABASE_NAME);
+		
+		if (!isDatabaseConnected) {
+
+			return;
+		}
 
 		DBCollection table = db.getCollection("voltrend");
 
@@ -246,7 +276,7 @@ public class DatabaseUtils {
 
 					pricages[j] = round(trendData.getPriceDiff());
 
-					pricagepercents[j] =round( trendData.getPriceDiffPercent());
+					pricagepercents[j] = round(trendData.getPriceDiffPercent());
 
 					volcagepercents[j] = round(trendData.getVolumeDiffPercentage());
 				}
@@ -268,7 +298,8 @@ public class DatabaseUtils {
 
 			document.put("PriceDate", priceDates);
 
-			document.put("High10/20", new double[] { round(trends.get(0).getHigh10()), round(trends.get(0).getHigh20()) });
+			document.put("High10/20",
+					new double[] { round(trends.get(0).getHigh10()), round(trends.get(0).getHigh20()) });
 
 			document.put("High10/20Date", new Date[] { trends.get(0).getHigh10Date(), trends.get(0).getHigh20Date() });
 
@@ -311,7 +342,7 @@ public class DatabaseUtils {
 			table.insert(document);
 		}
 	}
-	
+
 	private static double round(double value) {
 		return Math.round(value * 100.0) / 100.0;
 	}
