@@ -101,6 +101,18 @@ public class PriceTrends {
 				System.out.println("***   Invalid SURE value. Proceeding with default value 10   ***");
 			}
 		}
+		
+		if (params.containsKey("db")) {
+
+			try {
+
+				Unifier.SAVE_TO_DATABASE = Boolean.parseBoolean(params.get("db").get(0));
+
+			} catch (Exception e) {
+
+				System.out.println("***   Invalid DB flag. Proceeding without saving to database   ***");
+			}
+		}
 
 		if (params.containsKey("symbol")) {
 
@@ -164,7 +176,7 @@ public class PriceTrends {
 		for (int i = 0; i < symbolList.size(); i++) {
 
 			Symbol symbol = symbolList.get(i);
-			
+
 			try {
 
 				PriceTrend trendDetail = getTrendDetails(symbol.getName());
@@ -183,8 +195,8 @@ public class PriceTrends {
 					if (filter) {
 
 						processedTrendList.add(trendDetail);
-						
-						Utils.addToDuplicates(symbol.getName());
+
+						Utils.addToPriDups(symbol.getName());
 					}
 
 				}
@@ -251,8 +263,8 @@ public class PriceTrends {
 
 		writeTrendsToFile(headers, processedTrendList);
 		
-		if(Unifier.SAVE_TO_DATABASE) {
-			
+		if (Unifier.SAVE_TO_DATABASE) {
+
 			DatabaseUtils.savePriceTrend(processedTrendList, TREND.toUpperCase() + "TREND");
 		}
 	}
@@ -339,7 +351,7 @@ public class PriceTrends {
 							/ closeValues[closeValues.length - 2];
 
 			trend.setNowPercent(nowPercent);
-			
+
 			double dchg = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null
 					|| NO_VALUES < 10 || closeValues.length < 10 || closeValues[closeValues.length - 10] == null)
 							? Integer.MIN_VALUE

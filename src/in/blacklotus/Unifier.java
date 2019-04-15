@@ -8,27 +8,48 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import in.blacklotus.model.Command;
 import in.blacklotus.model.YahooResponse;
-import in.blacklotus.utils.Utils;
 
 public class Unifier {
 
 	public static final Map<String, YahooResponse> responseMap = new LinkedHashMap<>();
 
 	public static boolean SAVE_TO_DATABASE = false;
+	
+	public static String UNIFIER_DIRECTORY = "";
 
 	private static final String INPUT_FILE_NAME = "unifier.csv";
 	
-	public static HashMap<String, Integer> duplicates = new HashMap<>();
+	public static HashMap<String, Integer> lowHighDups = new HashMap<>();
+	
+	public static HashMap<String, Integer> priDups = new HashMap<>();
+	
+	public static HashMap<String, Integer> volDups = new HashMap<>();
 
 	public static void main(String[] args) {
+		
+		Map<String, List<String>> params = parseArguments(args);
 
 		ArrayList<Command> commands = readInput();
+		
+		System.out.println(
+				"--------------------------------------------------------------------------------------------------------");
 
-		SAVE_TO_DATABASE = true;
+		if (params.containsKey("db")) {
+
+			try {
+
+				SAVE_TO_DATABASE = Boolean.parseBoolean(params.get("db").get(0));
+
+			} catch (Exception e) {
+
+				System.out.println("***   Invalid DB flag. Proceeding without saving to database   ***");
+			}
+		}
 
 		for (Command command : commands) {
 
@@ -42,28 +63,28 @@ public class Unifier {
 			case "lowhigh10":
 
 				LowHigh10.main(command.getArgs());
-
+				
 				break;
 
 			case "pritrend":
 
 				PriceTrends.main(command.getArgs());
-
+				
 				break;
 
 			case "voltrend":
 
 				VolumeTrends.main(command.getArgs());
-
+				
 				break;
 
 			default:
 
-				System.out.println("**** INVALID COMMAND " + command.printRawCommand());
+				System.out.println("**** INVALID COMMAND " + command.printRawCommand() + " ****");
 			}
 		}
 		
-		Utils.writeDuplicatesToFile(duplicates);
+//		Utils.writeDuplicatesToFile(lowHighDups, priDups, volDups);
 	}
 
 	private static ArrayList<Command> readInput() {
@@ -71,6 +92,8 @@ public class Unifier {
 		File inputFile = new File(INPUT_FILE_NAME);
 
 		if (!inputFile.exists()) {
+			
+			System.out.println("**** UNIFIER.CSV not Found ****");
 
 			return null;
 		}
@@ -115,6 +138,44 @@ public class Unifier {
 		}
 
 		return commandsList;
+	}
+	
+	public static Map<String, List<String>> parseArguments(String args[]) {
+
+		Map<String, List<String>> params = new HashMap<>();
+
+		List<String> options = null;
+
+		for (int i = 0; i < args.length; i++) {
+
+			final String a = args[i];
+
+			if (a.charAt(0) == '-') {
+
+				if (a.length() < 2) {
+
+					System.err.println("Error at argument " + a);
+
+					return params;
+				}
+
+				options = new ArrayList<>();
+
+				params.put(a.substring(1), options);
+
+			} else if (options != null) {
+
+				options.add(a);
+
+			} else {
+
+				System.err.println("Illegal parameter usage");
+
+				return params;
+			}
+		}
+
+		return params;
 	}
 
 }

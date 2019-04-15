@@ -14,6 +14,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
+import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import javax.mail.Message;
@@ -339,6 +341,66 @@ public class Utils {
 
 		return inputList;
 	}
+	
+	public static List<String> readDupsInput(String INPUT_FILE_NAME) {
+
+		File inputFile = new File(INPUT_FILE_NAME);
+
+		if (!inputFile.exists()) {
+
+			return null;
+		}
+
+		List<String> inputList = new ArrayList<>();
+
+		String input = null;
+
+		BufferedReader reader;
+
+		try {
+
+			reader = new BufferedReader(new FileReader(inputFile));
+
+			input = reader.readLine();
+
+			reader.close();
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+
+		if (input != null) {
+
+			String split[] = input.split(",");
+
+			System.out.println(
+					"--------------------------------------------------------------------------------------------------------");
+
+			System.out.print("Fetching details for: ");
+
+			for (int i = 0; i < split.length; i++) {
+
+				String stock = split[i];
+
+				stock = stock.trim();
+
+				if (!"".equals(stock)) {
+
+					inputList.add(stock);
+
+					System.out.print(stock + ",");
+				}
+			}
+
+			System.out.println();
+
+			System.out.println(
+					"--------------------------------------------------------------------------------------------------------");
+		}
+
+		return inputList;
+	}
 
 	public static Stock getStockDetails(String stockName, int NO_VALUES, List<String> errorList) {
 
@@ -622,11 +684,13 @@ public class Utils {
 
 		String outputDir = sdf.format(new Date());
 
-		File dir = new File(outputDir);
+		String suffix = Unifier.UNIFIER_DIRECTORY;
+
+		File dir = new File(outputDir + suffix);
 
 		if (!dir.exists()) {
 
-			dir.mkdir();
+			dir.mkdirs();
 		}
 
 		return dir;
@@ -634,7 +698,7 @@ public class Utils {
 
 	public static File generateOutputFile(String type, File outputDir) {
 
-		SimpleDateFormat sdf = new SimpleDateFormat("MMMM_dd_yyyy_hh_mm_ss_aaa");
+		SimpleDateFormat sdf = new SimpleDateFormat("_MMMM_dd_yyyy_hh_mm_ss_aaa");
 
 		String outputFileName = type + sdf.format(new Date()) + ".csv";
 
@@ -681,11 +745,11 @@ public class Utils {
 		}
 	}
 
-	public static void writeDuplicatesToFile(HashMap<String, Integer> duplicates) {
+	public static void writeDuplicatesToFile(String[][] dups, String dir) {
 
 		try {
 
-			File file = generateOutputFile("dups_", generateOutputDir());
+			File file = generateOutputFile("dups_", new File(dir));
 
 			if (!file.exists()) {
 
@@ -694,12 +758,11 @@ public class Utils {
 
 			PrintWriter writer = new PrintWriter(new FileWriter(file));
 
-			for (String key : duplicates.keySet()) {
+			writer.println("SYMBOL,FILE");
+			
+			for (String[] data : dups) {
 
-				if (duplicates.get(key) > 1) {
-
-					writer.println(key + " : " + duplicates.get(key));
-				}
+				writer.println(data[0] + "," +data[1]);
 			}
 
 			writer.close();
@@ -710,15 +773,139 @@ public class Utils {
 		}
 	}
 
-	public static void addToDuplicates(String ticker) {
+	public static void addToLowHighDups(String ticker) {
 
-		if (Unifier.duplicates.containsKey(ticker)) {
+		if (Unifier.lowHighDups.containsKey(ticker)) {
 
-			Unifier.duplicates.put(ticker, Unifier.duplicates.get(ticker) + 1);
+			Unifier.lowHighDups.put(ticker, Unifier.lowHighDups.get(ticker) + 1);
 
 		} else {
 
-			Unifier.duplicates.put(ticker, 1);
+			Unifier.lowHighDups.put(ticker, 1);
 		}
+	}
+
+	public static void addToPriDups(String ticker) {
+
+		if (Unifier.priDups.containsKey(ticker)) {
+
+			Unifier.priDups.put(ticker, Unifier.priDups.get(ticker) + 1);
+
+		} else {
+
+			Unifier.priDups.put(ticker, 1);
+		}
+	}
+
+	public static void addToVolDups(String ticker) {
+
+		if (Unifier.volDups.containsKey(ticker)) {
+
+			Unifier.volDups.put(ticker, Unifier.volDups.get(ticker) + 1);
+
+		} else {
+
+			Unifier.volDups.put(ticker, 1);
+		}
+	}
+
+	public static HashMap<String, ArrayList<String>> getDuplicates(String OUTPUT_DIR, String extension) {
+
+		File inputDir = new File(OUTPUT_DIR);
+
+		HashMap<String, ArrayList<String>> duplicates = new HashMap<>();
+
+		if (inputDir.exists()) {
+
+			File files[] = inputDir.listFiles();
+
+			for (File file : files) {
+
+				if (!file.getName().startsWith("error")) {
+					
+					if(extension != null && !file.getName().endsWith(extension)) {
+						
+						continue;
+					}
+
+					List<String> tickersList = readSymbolsFromOutputCSV(file);
+
+					for (String ticker : tickersList) {
+
+						if (ticker != null) {
+							
+							if (duplicates.containsKey(ticker)) {
+
+								duplicates.get(ticker).add(file.getName());
+
+							} else {
+
+								ArrayList<String> list = new ArrayList<>();
+								
+								list.add(file.getName());
+								
+								duplicates.put(ticker, list);
+							}
+						}
+					}
+				}
+			}
+
+		} else {
+
+			System.out.println(inputDir + " does not exist");
+		}
+
+		return duplicates;
+	}
+
+	public static List<String> readSymbolsFromOutputCSV(File inputFile) {
+
+		List<String> inputList = new ArrayList<>();
+
+		if (inputFile.exists()) {
+
+			String input = null;
+
+			BufferedReader reader;
+
+			try {
+				
+				reader = new BufferedReader(new FileReader(inputFile));
+
+				input = reader.readLine();
+
+				while (input != null) {
+					
+					String split[] = input.split(",");
+
+					if (split.length > 1 && split[1] != null && !split[1].trim().isEmpty() && !"SYMBOL".equalsIgnoreCase(split[1])) {
+
+						inputList.add(split[1]);
+					}
+
+					input = reader.readLine();
+				}
+
+				reader.close();
+
+			} catch (IOException e) {
+
+				e.printStackTrace();
+			}
+		}
+
+		return inputList;
+	}
+	
+	public static String toISODate(Date date) {
+		
+		TimeZone tz = TimeZone.getTimeZone("UTC");
+		
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'"); // Quoted "Z" to indicate UTC, no timezone offset
+		
+		df.setTimeZone(tz);
+		
+		return df.format(date);
 	}
 }

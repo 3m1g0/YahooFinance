@@ -1,12 +1,19 @@
 package in.blacklotus.utils;
 
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import com.jakewharton.fliptables.FlipTableConverters;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
 import in.blacklotus.model.PriceTrend;
@@ -20,40 +27,40 @@ public class DatabaseUtils {
 	private static final String DATABASE_NAME = "unifier";
 
 	private static MongoClient mongoClient;
-	
+
 	private static boolean isDatabaseConnected = true;
 
 	private static MongoClient getInstance() {
 
 		if (mongoClient == null) {
-			
+
 			try {
 
 				mongoClient = new MongoClient();
-				
+
 				mongoClient.getDatabaseNames();
 
 			} catch (UnknownHostException e) {
 
 				isDatabaseConnected = false;
-				
+
 				mongoClient.close();
-			
+
 			} catch (Exception e) {
-				
+
 				isDatabaseConnected = false;
-				
+
 				mongoClient.close();
 			}
 		}
-		
+
 		return mongoClient;
 	}
 
 	public static void saveLowHigh10(List<Stock> stocksList) {
 
 		DB db = getInstance().getDB(DATABASE_NAME);
-		
+
 		if (!isDatabaseConnected) {
 
 			return;
@@ -61,57 +68,63 @@ public class DatabaseUtils {
 
 		DBCollection table = db.getCollection("lowhigh10");
 
+		SimpleDateFormat dateSdf = new SimpleDateFormat("MMMM dd yyyy");
+
+		SimpleDateFormat timeSdf = new SimpleDateFormat("hh:mm aaa");
+
 		for (int i = 0; i < stocksList.size(); i++) {
 
 			Stock stock = stocksList.get(i);
 
 			BasicDBObject document = new BasicDBObject();
 
-			document.put("FetchDate", new Date());
+			document.put("FetchDate", dateSdf.format(new Date()));
+
+			document.put("FetchTime", timeSdf.format(new Date()));
 
 			document.put("SNO", (i + 1));
 
 			document.put("Symbol", stock.getSymbol());
 
-			document.put("Low10", stock.getLow10());
+			document.put("Low10", Utils.round(stock.getLow10()));
 
 			document.put("Low10Date", stock.getLow10Date());
 
-			document.put("Price", stock.getNow());
+			document.put("Price", Utils.round(stock.getNow()));
 
-			document.put("High10", stock.getHigh10());
+			document.put("High10", Utils.round(stock.getHigh10()));
 
 			document.put("High10Date", stock.getHigh10Date());
 
-			document.put("PriceChange", stock.getPricage());
+			document.put("PriceChange", Utils.round(stock.getPricage()));
 
-			document.put("PercentPriceChange", stock.getNowPercent());
+			document.put("PercentPriceChange", Utils.round(stock.getNowPercent()));
 
-			document.put("LowHighDiff", stock.getLowHighDiff());
+			document.put("LowHighDiff", Utils.round(stock.getLowHighDiff()));
 
-			document.put("SUPT", stock.getSupt());
+			document.put("SUPT", Utils.round(stock.getSupt()));
 
-			document.put("REST", stock.getRest());
+			document.put("REST", Utils.round(stock.getRest()));
 
-			document.put("SRDIFF", stock.getSrdif());
+			document.put("SRDIFF", Utils.round(stock.getSrdif()));
 
-			document.put("PercentSUPT", stock.getSuptPercent());
+			document.put("PercentSUPT", Utils.round(stock.getSuptPercent()));
 
-			document.put("PercentREST", stock.getRestPercent());
+			document.put("PercentREST", Utils.round(stock.getRestPercent()));
 
 			document.put("SURE", stock.getSmar());
 
-			document.put("PercentLow10", stock.getLow10Percent());
+			document.put("PercentLow10", Utils.round(stock.getLow10Percent()));
 
-			document.put("PercentHigh10", stock.getHigh10Percent());
+			document.put("PercentHigh10", Utils.round(stock.getHigh10Percent()));
 
-			document.put("PercentLowHighDiff", stock.getLowHighDiffPercent());
+			document.put("PercentLowHighDiff", Utils.round(stock.getLowHighDiffPercent()));
 
-			document.put("PercentVolcage", stock.getVolumeChangePercent());
+			document.put("PercentVolcage", Utils.round(stock.getVolumeChangePercent()));
 
-			document.put("TENDCHG", stock.getDchg10());
+			document.put("TENDCHG", Utils.round(stock.getDchg10()));
 
-			document.put("PercentTENDCHG", stock.getDchgPercent());
+			document.put("PercentTENDCHG", Utils.round(stock.getDchgPercent()));
 
 			document.put("PriceRank", stock.priceRank());
 
@@ -124,13 +137,17 @@ public class DatabaseUtils {
 	public static void savePriceTrend(List<PriceTrend> stocksList, String trend) {
 
 		DB db = getInstance().getDB(DATABASE_NAME);
-		
+
 		if (!isDatabaseConnected) {
 
 			return;
 		}
 
 		DBCollection table = db.getCollection("pritrend");
+
+		SimpleDateFormat dateSdf = new SimpleDateFormat("MMMM dd yyyy");
+
+		SimpleDateFormat timeSdf = new SimpleDateFormat("hh:mm aaa");
 
 		for (int i = 0; i < stocksList.size(); i++) {
 
@@ -172,7 +189,9 @@ public class DatabaseUtils {
 
 			BasicDBObject document = new BasicDBObject();
 
-			document.put("FetchDate", new Date());
+			document.put("FetchDate", dateSdf.format(new Date()));
+
+			document.put("FetchTime", timeSdf.format(new Date()));
 
 			document.put("SNO", (i + 1));
 
@@ -236,13 +255,17 @@ public class DatabaseUtils {
 	public static void saveVolumeTrend(List<VolumeTrend> stocksList) {
 
 		DB db = getInstance().getDB(DATABASE_NAME);
-		
+
 		if (!isDatabaseConnected) {
 
 			return;
 		}
 
 		DBCollection table = db.getCollection("voltrend");
+		
+		SimpleDateFormat dateSdf = new SimpleDateFormat("MMMM dd yyyy");
+		
+		SimpleDateFormat timeSdf = new SimpleDateFormat("hh:mm aaa");
 
 		for (int i = 0; i < stocksList.size(); i++) {
 
@@ -284,7 +307,9 @@ public class DatabaseUtils {
 
 			BasicDBObject document = new BasicDBObject();
 
-			document.put("FetchDate", new Date());
+			document.put("FetchDate", dateSdf.format(new Date()));
+
+			document.put("FetchTime", timeSdf.format(new Date()));
 
 			document.put("SNO", (i + 1));
 
@@ -340,6 +365,113 @@ public class DatabaseUtils {
 			document.put("VolumeRank", trends.get(0).getVolumeRank());
 
 			table.insert(document);
+		}
+	}
+
+	public static Set<String> getPreviousDaySymbols() {
+
+		Set<String> symbolSet = new HashSet<>();
+
+		DB db = getInstance().getDB(DATABASE_NAME);
+
+		if (!isDatabaseConnected) {
+
+			return symbolSet;
+		}
+
+		DBCollection table = db.getCollection("voltrend");
+
+		SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd yyyy");
+
+		Calendar c = Calendar.getInstance();
+		
+		c.add(Calendar.DAY_OF_MONTH, -1);
+		
+		BasicDBObject query = new BasicDBObject("FetchDate", sdf.format(c.getTime()));
+
+		DBCursor results = table.find(query);
+
+		List<DBObject> stocks = results.toArray();
+
+		for (DBObject dbObject : stocks) {
+
+			symbolSet.add((String) dbObject.get("symbol"));
+		}
+
+		return symbolSet;
+
+	}
+
+	public static void saveOpeningValue(List<Stock> stocksList) {
+
+		DB db = getInstance().getDB(DATABASE_NAME);
+
+		if (!isDatabaseConnected) {
+
+			System.out.println("Not Connected");
+
+			return;
+		}
+
+		SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd yyyy");
+
+		DBCollection table = db.getCollection("openings");
+
+		BasicDBObject query = new BasicDBObject("FetchDate", sdf.format(new Date()));
+
+		DBCursor results = table.find(query);
+
+		String[] headers = new String[] { "SNO", "SYMBOL", "OPEN" };
+
+		String[][] data = new String[stocksList.size()][];
+
+		if (results.count() == 0) {
+
+			for (int i = 0; i < stocksList.size(); i++) {
+
+				Stock stock = stocksList.get(i);
+
+				BasicDBObject document = new BasicDBObject();
+
+				document.put("FetchDate", sdf.format(new Date()));
+
+				document.put("SNO", (i + 1));
+
+				document.put("Symbol", stock.getSymbol());
+
+				document.put("open", Utils.round(stock.getOpen()));
+
+				table.insert(document);
+
+				data[i] = new String[] { String.valueOf(i + 1), stock.getSymbol(),
+						String.format("%.2f", stock.getOpen()) };
+			}
+
+			System.out.println(FlipTableConverters.fromObjects(headers, data));
+
+		} else {
+
+//			System.out.println("--------------------------------------------------");
+//
+//			System.out.println("Already fetched for today");
+//
+//			System.out.println("--------------------------------------------------");
+
+			for (int i = 0; i < stocksList.size(); i++) {
+
+				Stock stock = stocksList.get(i);
+
+				data[i] = new String[] { String.valueOf(i + 1), stock.getSymbol(),
+						String.format("%.2f", stock.getOpen()) };
+			}
+
+			System.out.println(FlipTableConverters.fromObjects(headers, data));
+			
+//			System.out.println("--------------------------------------------------");
+//
+//			System.out.println("Already fetched for today");
+//
+//			System.out.println("--------------------------------------------------");
 		}
 	}
 

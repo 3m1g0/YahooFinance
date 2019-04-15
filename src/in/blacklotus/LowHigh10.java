@@ -134,6 +134,18 @@ public class LowHigh10 {
 
 			NO_VALUES = 20;
 		}
+		
+		if (params.containsKey("db")) {
+
+			try {
+
+				Unifier.SAVE_TO_DATABASE = Boolean.parseBoolean(params.get("db").get(0));
+
+			} catch (Exception e) {
+
+				System.out.println("***   Invalid DB flag. Proceeding without saving to database   ***");
+			}
+		}
 
 		if (params.containsKey("repeat")) {
 
@@ -324,7 +336,7 @@ public class LowHigh10 {
 		for (int i = 0; i < symbolList.size(); i++) {
 
 			Symbol symbol = symbolList.get(i);
-			
+
 			try {
 				Stock stockDetail = getStockDetails(symbol.getName());
 
@@ -362,8 +374,8 @@ public class LowHigh10 {
 					if (filter) {
 
 						stocksList.add(stockDetail);
-						
-						Utils.addToDuplicates(symbol.getName());
+
+						Utils.addToLowHighDups(symbol.getName());
 					}
 				}
 			} catch (Exception e) {
@@ -409,7 +421,7 @@ public class LowHigh10 {
 		System.out.println(FlipTableConverters.fromObjects(headers, data));
 
 		writeToFile(stocksList);
-
+		
 		if (Unifier.SAVE_TO_DATABASE) {
 
 			DatabaseUtils.saveLowHigh10(stocksList);
@@ -1189,7 +1201,7 @@ public class LowHigh10 {
 
 			generateOutputDir();
 
-			generateOutputFile("10Day_");
+			generateOutputFile("10Day");
 
 			File file = new File(outputDir, outputFileName);
 
@@ -1391,7 +1403,9 @@ public class LowHigh10 {
 
 		outputDir = sdf.format(new Date());
 
-		File dir = new File(outputDir);
+		String suffix = Unifier.UNIFIER_DIRECTORY;
+
+		File dir = new File(outputDir + suffix);
 
 		if (!dir.exists()) {
 
@@ -1401,7 +1415,7 @@ public class LowHigh10 {
 
 	private static void generateOutputFile(String type) {
 
-		SimpleDateFormat sdf = new SimpleDateFormat("MMMM_dd_yyyy_hh_mm_aaa");
+		SimpleDateFormat sdf = new SimpleDateFormat("_MMMM_dd_yyyy_hh_mm_aaa");
 
 		outputFileName = type + sdf.format(new Date()) + ".csv";
 

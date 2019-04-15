@@ -103,6 +103,18 @@ public class VolumeTrends {
 
 			SMAR = params.get("smar").get(0);
 		}
+		
+		if (params.containsKey("db")) {
+
+			try {
+
+				Unifier.SAVE_TO_DATABASE = Boolean.parseBoolean(params.get("db").get(0));
+
+			} catch (Exception e) {
+
+				System.out.println("***   Invalid DB flag. Proceeding without saving to database   ***");
+			}
+		}
 
 		if (params.containsKey("sure")) {
 
@@ -198,7 +210,7 @@ public class VolumeTrends {
 
 						processedTrendList.add(trendDetail);
 						
-						Utils.addToDuplicates(symbol.getName());
+						Utils.addToVolDups(symbol.getName());
 					}
 
 				}
@@ -604,7 +616,7 @@ public class VolumeTrends {
 	private static void writeTrendsToFile(String[] headers, List<VolumeTrend> stocks) {
 
 		try {
-
+			
 			File file = Utils.generateOutputFile("voltrend", Utils.generateOutputDir());
 
 			if (!file.exists()) {

@@ -16,6 +16,8 @@ public class Stock {
 	private String symbol;
 
 	private double now;
+	
+	private double open;
 
 	private double yesterday;
 
@@ -166,6 +168,14 @@ public class Stock {
 
 	public void setNow(double close) {
 		this.now = close;
+	}
+
+	public double getOpen() {
+		return open;
+	}
+
+	public void setOpen(double open) {
+		this.open = open;
 	}
 
 	public double getYesterday() {
