@@ -56,7 +56,7 @@ public class Earnings {
 
 			inputDate = params.get("date").get(0);
 
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
 			try {
 
@@ -78,14 +78,14 @@ public class Earnings {
 
 			} catch (ParseException e) {
 
-				System.out.println("*** Enter the date in yyyy-dd-mm format ***");
+				System.out.println("*** Enter the date in yyyy-MM-dd format ***");
 
 				return;
 			}
 
 		} else {
 
-			System.out.println("*** Enter the date in yyyy-dd-mm format ***");
+			System.out.println("*** Enter the date in yyyy-MM-dd format ***");
 
 			return;
 		}

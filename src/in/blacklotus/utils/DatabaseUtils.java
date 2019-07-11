@@ -408,7 +408,7 @@ public class DatabaseUtils {
 
 		if (!isDatabaseConnected) {
 
-			System.out.println("Not Connected");
+			System.out.println("Unable to connect Database");
 
 			return;
 		}
@@ -421,7 +421,7 @@ public class DatabaseUtils {
 
 		DBCursor results = table.find(query);
 
-		String[] headers = new String[] { "SNO", "SYMBOL", "OPEN" };
+		String[] headers = new String[] { "SNO", "SYMBOL", "OPEN", "CLOSE" };
 
 		String[][] data = new String[stocksList.size()][];
 
@@ -440,11 +440,13 @@ public class DatabaseUtils {
 				document.put("Symbol", stock.getSymbol());
 
 				document.put("open", Utils.round(stock.getOpen()));
+				
+				document.put("close", Utils.round(stock.getNow()));
 
 				table.insert(document);
 
 				data[i] = new String[] { String.valueOf(i + 1), stock.getSymbol(),
-						String.format("%.2f", stock.getOpen()) };
+						String.format("%.2f", stock.getOpen()), String.format("%.2f", stock.getNow()) };
 			}
 
 			System.out.println(FlipTableConverters.fromObjects(headers, data));
@@ -462,7 +464,7 @@ public class DatabaseUtils {
 				Stock stock = stocksList.get(i);
 
 				data[i] = new String[] { String.valueOf(i + 1), stock.getSymbol(),
-						String.format("%.2f", stock.getOpen()) };
+						String.format("%.2f", stock.getOpen()), String.format("%.2f", stock.getNow()) };
 			}
 
 			System.out.println(FlipTableConverters.fromObjects(headers, data));

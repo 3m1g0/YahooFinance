@@ -341,14 +341,19 @@ public class Utils {
 
 		return inputList;
 	}
-	
+
 	public static List<String> readDupsInput(String INPUT_FILE_NAME) {
 
 		File inputFile = new File(INPUT_FILE_NAME);
 
 		if (!inputFile.exists()) {
 
-			return null;
+			inputFile = new File(INPUT_FILE_NAME.replace(".csv", ".txt"));
+			
+			if (!inputFile.exists()) {
+
+				return null;
+			}
 		}
 
 		List<String> inputList = new ArrayList<>();
@@ -618,7 +623,7 @@ public class Utils {
 
 	public static int getHighIndex(Double[] data, int mCount) {
 
-		long count = 0;
+		long count = 1;
 
 		int max = data.length - 1;
 
@@ -649,7 +654,7 @@ public class Utils {
 
 	public static int getLowIndex(Double[] data, int mCount) {
 
-		int count = 0;
+		int count = 1;
 
 		int min = data.length - 1;
 
@@ -759,10 +764,10 @@ public class Utils {
 			PrintWriter writer = new PrintWriter(new FileWriter(file));
 
 			writer.println("SYMBOL,FILE");
-			
+
 			for (String[] data : dups) {
 
-				writer.println(data[0] + "," +data[1]);
+				writer.println(data[0] + "," + data[1]);
 			}
 
 			writer.close();
@@ -822,9 +827,9 @@ public class Utils {
 			for (File file : files) {
 
 				if (!file.getName().startsWith("error")) {
-					
-					if(extension != null && !file.getName().endsWith(extension)) {
-						
+
+					if (extension != null && !file.getName().endsWith(extension)) {
+
 						continue;
 					}
 
@@ -833,7 +838,7 @@ public class Utils {
 					for (String ticker : tickersList) {
 
 						if (ticker != null) {
-							
+
 							if (duplicates.containsKey(ticker)) {
 
 								duplicates.get(ticker).add(file.getName());
@@ -841,9 +846,9 @@ public class Utils {
 							} else {
 
 								ArrayList<String> list = new ArrayList<>();
-								
+
 								list.add(file.getName());
-								
+
 								duplicates.put(ticker, list);
 							}
 						}
@@ -870,16 +875,17 @@ public class Utils {
 			BufferedReader reader;
 
 			try {
-				
+
 				reader = new BufferedReader(new FileReader(inputFile));
 
 				input = reader.readLine();
 
 				while (input != null) {
-					
+
 					String split[] = input.split(",");
 
-					if (split.length > 1 && split[1] != null && !split[1].trim().isEmpty() && !"SYMBOL".equalsIgnoreCase(split[1])) {
+					if (split.length > 1 && split[1] != null && !split[1].trim().isEmpty()
+							&& !"SYMBOL".equalsIgnoreCase(split[1])) {
 
 						inputList.add(split[1]);
 					}
@@ -897,15 +903,51 @@ public class Utils {
 
 		return inputList;
 	}
-	
+
 	public static String toISODate(Date date) {
-		
+
 		TimeZone tz = TimeZone.getTimeZone("UTC");
-		
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'"); // Quoted "Z" to indicate UTC, no timezone offset
-		
+
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'"); // Quoted
+																				// "Z"
+																				// to
+																				// indicate
+																				// UTC,
+																				// no
+																				// timezone
+																				// offset
+
 		df.setTimeZone(tz);
-		
+
 		return df.format(date);
+	}
+
+	public static String numberToWord(int number) {
+
+		switch (number) {
+		case 10:
+			return "TEN";
+		case 20:
+			return "TWENTY";
+		case 30:
+			return "THIRTY";
+		case 40:
+			return "FOURTY";
+		case 50:
+			return "FIFTY";
+		case 60:
+			return "SIXTY";
+		case 70:
+			return "SEVENTY";
+		case 80:
+			return "EIGHTY";
+		case 90:
+			return "NINTY";
+		case 100:
+			return "HUNDRED";
+		default:
+			return "TEN";
+
+		}
 	}
 }

@@ -135,7 +135,7 @@ public class Stock {
 	}
 
 	public void calculateSRDiff() {
-		this.srdif = (this.supt - this.rest);
+		this.srdif = (this.rest - this.supt);
 	}
 
 	public String getCurrency() {

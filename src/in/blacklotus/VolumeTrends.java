@@ -272,6 +272,16 @@ public class VolumeTrends {
 
 			data[i] = tmp.get(i);
 		}
+		
+		for(int i = 0; i < headers.length; i++) {
+			
+			headers[i] = headers[i].replaceAll("TEN", Utils.numberToWord(NO_VALUES));
+			
+			if(i == 14 || i == 15) {
+				
+				headers[i] = headers[i].replaceAll("10", String.valueOf(NO_VALUES));
+			}
+		}
 
 		System.out.println(FlipTableConverters.fromObjects(headers, data));
 
@@ -517,12 +527,12 @@ public class VolumeTrends {
 
 		Double sum = Double.valueOf(0);
 
-		for (int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+		for (int i = 0; i < Math.min(sortedValues.size(), 4 * NO_VALUES / 10); i++) {
 
 			sum += sortedValues.get(i);
 		}
 
-		return sum / Math.min(sortedValues.size(), 4);
+		return sum / Math.min(sortedValues.size(), 4 * NO_VALUES / 10);
 	}
 
 	private static double REST(Double[] closeValues, int sure) {
@@ -547,12 +557,12 @@ public class VolumeTrends {
 
 		Double sum = Double.valueOf(0);
 
-		for (int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+		for (int i = 0; i < Math.min(sortedValues.size(), 4 * NO_VALUES / 10); i++) {
 
 			sum += sortedValues.get(sortedValues.size() - i - 1);
 		}
 
-		return sum / Math.min(sortedValues.size(), 4);
+		return sum / Math.min(sortedValues.size(), 4 * NO_VALUES / 10);
 	}
 
 	private static List<VolumeTrendData> getVolumeTrend(Double closeValues[], Double low10, Double low20,

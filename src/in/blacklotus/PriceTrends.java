@@ -101,7 +101,7 @@ public class PriceTrends {
 				System.out.println("***   Invalid SURE value. Proceeding with default value 10   ***");
 			}
 		}
-		
+
 		if (params.containsKey("db")) {
 
 			try {
@@ -259,10 +259,20 @@ public class PriceTrends {
 			data[i] = tmp.get(i);
 		}
 
+		for (int i = 0; i < headers.length; i++) {
+
+			headers[i] = headers[i].replaceAll("TEN", Utils.numberToWord(NO_VALUES));
+
+			if (i == 14 || i == 15) {
+
+				headers[i] = headers[i].replaceAll("10", String.valueOf(NO_VALUES));
+			}
+		}
+
 		System.out.println(FlipTableConverters.fromObjects(headers, data));
 
 		writeTrendsToFile(headers, processedTrendList);
-		
+
 		if (Unifier.SAVE_TO_DATABASE) {
 
 			DatabaseUtils.savePriceTrend(processedTrendList, TREND.toUpperCase() + "TREND");
@@ -503,12 +513,12 @@ public class PriceTrends {
 
 		Double sum = Double.valueOf(0);
 
-		for (int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+		for (int i = 0; i < Math.min(sortedValues.size(), 4 * NO_VALUES / 10); i++) {
 
 			sum += sortedValues.get(i);
 		}
 
-		return sum / Math.min(sortedValues.size(), 4);
+		return sum / Math.min(sortedValues.size(), 4 * NO_VALUES / 10);
 	}
 
 	private static double REST(Double[] closeValues, int sure) {
@@ -533,12 +543,12 @@ public class PriceTrends {
 
 		Double sum = Double.valueOf(0);
 
-		for (int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+		for (int i = 0; i < Math.min(sortedValues.size(), 4 * NO_VALUES / 10); i++) {
 
 			sum += sortedValues.get(sortedValues.size() - i - 1);
 		}
 
-		return sum / Math.min(sortedValues.size(), 4);
+		return sum / Math.min(sortedValues.size(), 4 * NO_VALUES / 10);
 	}
 
 	private static List<PriceTrendData> getPriceTrend(Double closeValues[], Double low10, Double low20, Date low10Date,
@@ -613,8 +623,10 @@ public class PriceTrends {
 	private static void writeTrendsToFile(String[] headers, List<PriceTrend> stocks) {
 
 		try {
+			
+			String filenamePrefix = "pricetrends_" + TREND.toUpperCase() + "_" + TREND_COUNT + "Day";
 
-			File file = Utils.generateOutputFile("pritrends", Utils.generateOutputDir());
+			File file = Utils.generateOutputFile(filenamePrefix, Utils.generateOutputDir());
 
 			if (!file.exists()) {
 

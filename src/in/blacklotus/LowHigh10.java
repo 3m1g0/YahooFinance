@@ -68,7 +68,7 @@ public class LowHigh10 {
 	private static final String[] SORT_KEYS = { "PRICE", "LOW10", "HIGH10", "%LOW10", "%HIGH10", "%TODAY", "%LOHIDIF",
 			"PriR", "VolR", "SMAR" };
 
-	private static final String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%NOW,$LOHIDIF,SUPT,REST,$SRDIF,%SUPT,%REST,SURE,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,TENDCHG,%TENDCHG,VolR,PriR,TICKER";
+	private static String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%NOW,$LOHIDIF,SUPT,REST,$SRDIF,%SUPT,%REST,SURE,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,TENDCHG,%TENDCHG,VolR,PriR,TICKER";
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
@@ -97,11 +97,11 @@ public class LowHigh10 {
 		System.out.println(
 				"--------------------------------------------------------------------------------------------------------");
 
-		if (params.containsKey("count")) {
+		if (params.containsKey("days")) {
 
 			try {
 
-				NO_VALUES = Integer.parseInt(params.get("count").get(0));
+				NO_VALUES = Integer.parseInt(params.get("days").get(0));
 
 			} catch (NumberFormatException e) {
 
@@ -408,6 +408,10 @@ public class LowHigh10 {
 
 			MultiComparator.sort(stocksList, comparators);
 		}
+		
+		HEADER = HEADER.replaceAll("10", String.valueOf(NO_VALUES));
+		
+		HEADER = HEADER.replaceAll("TEN", Utils.numberToWord(NO_VALUES));
 
 		String[] headers = HEADER.split(",");
 
@@ -650,16 +654,16 @@ public class LowHigh10 {
 			stock.setNowPercent(nowPercent);
 
 			double dchg = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null
-					|| NO_VALUES < 10 || closeValues.length < 10 || closeValues[closeValues.length - 10] == null)
+					|| NO_VALUES < 10 || closeValues.length < NO_VALUES || closeValues[closeValues.length - NO_VALUES] == null)
 							? Integer.MIN_VALUE
-							: (closeValues[closeValues.length - 2] - closeValues[closeValues.length - 10]);
+							: (closeValues[closeValues.length - 2] - closeValues[closeValues.length - NO_VALUES]);
 
 			stock.setDchg10(dchg);
 
 			double dchgPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null
-					|| NO_VALUES < 10 || closeValues.length < 10 || closeValues[closeValues.length - 10] == null)
+					|| NO_VALUES < 10 || closeValues.length < NO_VALUES || closeValues[closeValues.length - NO_VALUES] == null)
 							? Integer.MIN_VALUE
-							: (closeValues[closeValues.length - 2] - closeValues[closeValues.length - 10]) * 100
+							: (closeValues[closeValues.length - 2] - closeValues[closeValues.length - NO_VALUES]) * 100
 									/ closeValues[closeValues.length - 2];
 
 			stock.setDchgPercent(dchgPercent);
@@ -784,12 +788,12 @@ public class LowHigh10 {
 
 		Double sum = Double.valueOf(0);
 
-		for (int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+		for (int i = 0; i < Math.min(sortedValues.size(), 4 * NO_VALUES / 10); i++) {
 
 			sum += sortedValues.get(i);
 		}
 
-		return sum / Math.min(sortedValues.size(), 4);
+		return sum / Math.min(sortedValues.size(), 4 * NO_VALUES / 10);
 	}
 
 	private static double REST(Double[] closeValues, int sure) {
@@ -814,12 +818,12 @@ public class LowHigh10 {
 
 		Double sum = Double.valueOf(0);
 
-		for (int i = 0; i < Math.min(sortedValues.size(), 4); i++) {
+		for (int i = 0; i < Math.min(sortedValues.size(), 4 * NO_VALUES / 10); i++) {
 
 			sum += sortedValues.get(sortedValues.size() - i - 1);
 		}
 
-		return sum / Math.min(sortedValues.size(), 4);
+		return sum / Math.min(sortedValues.size(), 4 * NO_VALUES / 10);
 	}
 
 	private static PriceTrend getTrendDetails(String stockName) {
@@ -1309,7 +1313,7 @@ public class LowHigh10 {
 
 	private static int getHighIndex(Double[] data) {
 
-		long count = 0;
+		long count = 1;
 
 		int max = data.length - 1;
 
@@ -1340,7 +1344,7 @@ public class LowHigh10 {
 
 	private static int getLowIndex(Double[] data) {
 
-		int count = 0;
+		int count = 1;
 
 		int min = data.length - 1;
 
