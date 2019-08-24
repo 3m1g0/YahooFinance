@@ -74,6 +74,18 @@ public class VolumeTrends {
 				System.out.println("***   Invalid COUNT value. Proceeding with default value 2   ***");
 			}
 		}
+		
+		if (params.containsKey("days")) {
+
+			try {
+
+				NO_VALUES = Integer.parseInt(params.get("days").get(0));
+
+			} catch (NumberFormatException e) {
+
+				System.out.println("***   Invalid COUNT value. Proceeding with default value 20   ***");
+			}
+		}
 
 		if (params.containsKey("vol")) {
 
@@ -229,8 +241,8 @@ public class VolumeTrends {
 		processing = false;
 
 		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", "PRICE", "HIGH10/20", "$PRICAGE", "%PRICAGE",
-				"$LOHIDIF", "SUPT", "REST", "$SRDIF", "%SUPT", "%REST", "SURE", "%LOW10", "%HIGH10", "VOLUME",
-				"%VOLCAGE", "TENDCHG", "%TENDCHG", "VolR", "PriR", "TICKER" };
+				"$LOHIDIF", "TENDCHG", "%TENDCHG", "SUPT", "REST", "$SRDIF", "%SUPT", "%REST", "SURE", "NEWHIGH",
+				"%LOW10", "%HIGH10", "VOLUME", "%VOLCAGE", "VolR", "PriR", "DayR", "TICKER" };
 
 		List<String[]> tmp = new ArrayList<>();
 
@@ -379,15 +391,15 @@ public class VolumeTrends {
 			double dchg = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null
 					|| NO_VALUES < 10 || closeValues.length < 10 || closeValues[closeValues.length - 10] == null)
 							? Integer.MIN_VALUE
-							: (closeValues[closeValues.length - 2] - closeValues[closeValues.length - 10]);
+							: (closeValues[closeValues.length - 1] - closeValues[closeValues.length - 10]);
 
 			trend.setDchg10(dchg);
 
 			double dchgPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null
 					|| NO_VALUES < 10 || closeValues.length < 10 || closeValues[closeValues.length - 10] == null)
 							? Integer.MIN_VALUE
-							: (closeValues[closeValues.length - 2] - closeValues[closeValues.length - 10]) * 100
-									/ closeValues[closeValues.length - 2];
+							: (closeValues[closeValues.length - 1] - closeValues[closeValues.length - 10]) * 100
+									/ closeValues[closeValues.length - 1];
 
 			trend.setDchgPercent(dchgPercent);
 
@@ -627,7 +639,9 @@ public class VolumeTrends {
 
 		try {
 			
-			File file = Utils.generateOutputFile("voltrend", Utils.generateOutputDir());
+			String filenamePrefix = "voltrend_" + NO_VALUES + "DAY_" + TREND_COUNT + "_" + TREND.toUpperCase();
+
+			File file = Utils.generateOutputFile(filenamePrefix, Utils.generateOutputDir());
 
 			if (!file.exists()) {
 
@@ -660,6 +674,8 @@ public class VolumeTrends {
 					writer.println(tmp.replaceAll("_", ","));
 				}
 			}
+			
+			Utils.printVolRPriRLegend(writer);
 
 			writer.close();
 

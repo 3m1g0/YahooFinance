@@ -42,6 +42,8 @@ public class VolumeTrendData {
 	private int priceRank;
 	
 	private int volumeRank;
+	
+	private int dayRank;
 
 	private SimpleDateFormat sdf;
 
@@ -305,5 +307,13 @@ public class VolumeTrendData {
 	public String toString() {
 
 		return new Gson().toJson(this);
+	}
+
+	public int getDayRank() {
+		return dayRank;
+	}
+
+	public void setDayRank(int dayRank) {
+		this.dayRank = dayRank;
 	}
 }

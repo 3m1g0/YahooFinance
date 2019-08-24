@@ -68,7 +68,7 @@ public class LowHigh10 {
 	private static final String[] SORT_KEYS = { "PRICE", "LOW10", "HIGH10", "%LOW10", "%HIGH10", "%TODAY", "%LOHIDIF",
 			"PriR", "VolR", "SMAR" };
 
-	private static String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%NOW,$LOHIDIF,SUPT,REST,$SRDIF,%SUPT,%REST,SURE,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,TENDCHG,%TENDCHG,VolR,PriR,TICKER";
+	private static String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%NOW,$LOHIDIF,TENDCHG,%TENDCHG,SUPT,REST,$SRDIF,%SUPT,%REST,SURE,NEWHIGH,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,VolR,PriR,TICKER";
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
@@ -656,15 +656,15 @@ public class LowHigh10 {
 			double dchg = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null
 					|| NO_VALUES < 10 || closeValues.length < NO_VALUES || closeValues[closeValues.length - NO_VALUES] == null)
 							? Integer.MIN_VALUE
-							: (closeValues[closeValues.length - 2] - closeValues[closeValues.length - NO_VALUES]);
+							: (closeValues[closeValues.length - 1] - closeValues[closeValues.length - NO_VALUES]);
 
 			stock.setDchg10(dchg);
 
 			double dchgPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null
 					|| NO_VALUES < 10 || closeValues.length < NO_VALUES || closeValues[closeValues.length - NO_VALUES] == null)
 							? Integer.MIN_VALUE
-							: (closeValues[closeValues.length - 2] - closeValues[closeValues.length - NO_VALUES]) * 100
-									/ closeValues[closeValues.length - 2];
+							: (closeValues[closeValues.length - 1] - closeValues[closeValues.length - NO_VALUES]) * 100
+									/ closeValues[closeValues.length - 1];
 
 			stock.setDchgPercent(dchgPercent);
 
@@ -679,12 +679,20 @@ public class LowHigh10 {
 			stock.setHigh10Index(highValues.length - highIndex);
 
 			stock.setHigh10(highValues[highIndex]);
+			
+			stock.setHigh20Index(highValues.length - highIndex);
+
+			stock.setHigh20(highValues[highIndex]);
 
 			int lowIndex = getLowIndex(lowValues);
 
 			stock.setLow10Index(lowValues.length - lowIndex);
 
 			stock.setLow10(lowValues[lowIndex]);
+			
+			stock.setLow20Index(lowValues.length - lowIndex);
+
+			stock.setLow20(lowValues[lowIndex]);
 
 			stock.calculateHigh10Percenttage();
 
@@ -1204,8 +1212,22 @@ public class LowHigh10 {
 		try {
 
 			generateOutputDir();
+			
+			String name = "";
+			
+			for(String s: params.keySet()) {
+				
+				String val = "";
+				
+				for(String t: params.get(s)) {
+					
+					val += "-" + t;
+				}
+				
+				name += "_" + s + val;
+			}
 
-			generateOutputFile("10Day");
+			generateOutputFile("lowhigh_" + NO_VALUES + "Day" + name);
 
 			File file = new File(outputDir, outputFileName);
 
@@ -1224,6 +1246,8 @@ public class LowHigh10 {
 
 				writer.println(stock.toPrintableString(i + 1));
 			}
+			
+			Utils.printVolRPriRLegend(writer);
 
 			writer.close();
 
@@ -1419,7 +1443,7 @@ public class LowHigh10 {
 
 	private static void generateOutputFile(String type) {
 
-		SimpleDateFormat sdf = new SimpleDateFormat("_MMMM_dd_yyyy_hh_mm_aaa");
+		SimpleDateFormat sdf = new SimpleDateFormat("_MMMM_dd_yyyy_hh_mm_ss_aaa");
 
 		outputFileName = type + sdf.format(new Date()) + ".csv";
 
@@ -1479,6 +1503,8 @@ public class LowHigh10 {
 	}
 
 	private static void parseArguments(String args[]) {
+		
+		params.clear();
 
 		List<String> options = null;
 

@@ -950,4 +950,22 @@ public class Utils {
 
 		}
 	}
+	
+	public static void printVolRPriRLegend(PrintWriter writer) {
+		writer.println("");
+		writer.println("");
+		writer.println("");
+		writer.println("VolR,Rank");
+		writer.println(">150%,1");
+		writer.println(">100%,2");
+		writer.println(">70%,3");
+		writer.println(">40%,4");
+		writer.println("<40%,5");
+		writer.println("");
+		writer.println("PriR,Rank");
+		writer.println(">5%,1");
+		writer.println("3-5%,2");
+		writer.println("1-3%,3");
+		writer.println("<1%,4");
+	}
 }

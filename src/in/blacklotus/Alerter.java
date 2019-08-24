@@ -98,7 +98,7 @@ public class Alerter {
 		System.out.println(
 				"--------------------------------------------------------------------------------------------------------");
 
-		if (params.containsKey("count")) {
+		if (params.containsKey("days")) {
 
 			try {
 

@@ -16,7 +16,7 @@ public class Stock {
 	private String symbol;
 
 	private double now;
-	
+
 	private double open;
 
 	private double yesterday;
@@ -84,9 +84,9 @@ public class Stock {
 	private double dchg10;
 
 	private double dchgPercent;
-	
+
 	private int prir;
-	
+
 	private int volr;
 
 	protected SimpleDateFormat sdf;
@@ -466,6 +466,16 @@ public class Stock {
 		return Math.round(value * 100.0) / 100.0;
 	}
 
+	public String getNewHigh() {
+		if (this.getNow() == this.getHigh20()) {
+			return "HIGH";
+		} else if (this.getNow() == this.getLow20()) {
+			return "LOW";
+		} else {
+			return "NONE";
+		}
+	}
+
 	protected String getPrintableData(double value) {
 
 		if (value == -9999) {
@@ -485,7 +495,7 @@ public class Stock {
 			return value + "%";
 		}
 	}
-	
+
 	protected String getPrintableDataValue(double value) {
 
 		if (value == -9999) {
@@ -800,17 +810,19 @@ public class Stock {
 
 		if (name == null) {
 
-			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
+			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
 		}
 
-		return String.format("%d,%s,%s,%s,%s,%s,%s,%s,S: %s,R: %s,%s,S: %s%%,R: %s%%,%s,L: %s,H: %s,%s,V: %s,T: %s,T: %s,V: %s,P: %s,%s", index,
-				this.symbol, toPrintableLow(0), round(this.now), toPrintableHigh(0),
+		return String.format(
+				"%d,%s,%s,%s,%s,%s,%s,%s,T: %s,T: %s,S: %s,R: %s,%s,S: %s%%,R: %s%%,%s,%s,L: %s,H: %s,%s,V: %s,V: %s,P: %s,%s",
+				index, this.symbol, toPrintableLow(0), round(this.now), toPrintableHigh(0),
 				getPrintableDataValue(round(this.pricage)), getPrintableData(round(this.nowPercent)),
-				round(this.lowHighDiff), round(getSupt()), round(getRest()), round(getSrdif()), round(getSuptPercent()),
-				round(getRestPercent()), getSmar(), getPrintableData(round(this.low10Percent)),
-				getPrintableData(round(this.high10Percent)), getPrintableData(round(this.lowHighDiffPercent)),
-				getPrintableData(round(this.volumeChangePercent)), getPrintableDataValue(round(this.dchg10)),
-				getPrintableData(round(this.dchgPercent)), volumeRank(), priceRank(), this.symbol);
+				round(this.lowHighDiff), getPrintableDataValue(round(this.dchg10)),
+				getPrintableData(round(this.dchgPercent)), round(getSupt()), round(getRest()), round(getSrdif()),
+				round(getSuptPercent()), round(getRestPercent()), getSmar(), this.getNewHigh(),
+				getPrintableData(round(this.low10Percent)), getPrintableData(round(this.high10Percent)),
+				getPrintableData(round(this.lowHighDiffPercent)), getPrintableData(round(this.volumeChangePercent)),
+				volumeRank(), priceRank(), this.symbol);
 
 	}
 
