@@ -196,6 +196,10 @@ public class Utils {
 
 			return NumberFormat.getNumberInstance(Locale.US).format(round(volume * 1.00 / 1000000)) + "M";
 
+		} else if (Math.abs(volume) > 99999) {
+
+			return NumberFormat.getNumberInstance(Locale.US).format(round(volume * 1.00 / 1000)) + "K";
+
 		} else {
 
 			return NumberFormat.getNumberInstance(Locale.US).format(volume);
@@ -459,17 +463,17 @@ public class Utils {
 			lowValues = yahooResponse.getChart().getResult()[0].getIndicators().getQuote()[0].getLow();
 
 			highValues = yahooResponse.getChart().getResult()[0].getIndicators().getQuote()[0].getHigh();
-
+			
 			stock.setCurrency(metaData.getCurrency());
-
+			
 			stock.setSymbol(metaData.getSymbol());
-
+			
 			stock.setName(metaData.getExchangeName());
-
+			
 			stock.setNow(closeValues[closeValues.length - 1] == null ? -9999 : closeValues[closeValues.length - 1]);
-
+			
 			stock.setVolume(volumes[volumes.length - 1]);
-
+			
 			double nowPercent = (NO_VALUES < 2 || closeValues.length < 2 || closeValues[closeValues.length - 2] == null)
 					? -9999
 					: (stock.getNow() - closeValues[closeValues.length - 2]) * 100
@@ -496,7 +500,7 @@ public class Utils {
 			stock.calculateLow20Percenttage();
 
 			stock.calculateLowHighDiffPercent();
-
+			
 			stock.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
 			stock.setHigh20Date(new Date(timestamps[highIndex] * 1000L));
@@ -700,6 +704,24 @@ public class Utils {
 
 		return dir;
 	}
+	
+	public static File generateOutputDir(Date mDate) {
+
+		SimpleDateFormat sdf = new SimpleDateFormat("MMMM_dd_yyyy");
+
+		String outputDir = sdf.format(mDate);
+
+		String suffix = Unifier.UNIFIER_DIRECTORY;
+
+		File dir = new File(outputDir + suffix);
+
+		if (!dir.exists()) {
+
+			dir.mkdirs();
+		}
+
+		return dir;
+	}
 
 	public static File generateOutputFile(String type, File outputDir) {
 
@@ -886,6 +908,11 @@ public class Utils {
 
 					if (split.length > 1 && split[1] != null && !split[1].trim().isEmpty()
 							&& !"SYMBOL".equalsIgnoreCase(split[1])) {
+						
+						if(split[1].equalsIgnoreCase("Rank")) {
+							
+							break;
+						}
 
 						inputList.add(split[1]);
 					}

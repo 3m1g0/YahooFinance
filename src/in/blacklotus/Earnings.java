@@ -595,6 +595,7 @@ public class Earnings {
 		writeEarningsToFile(headers);
 	}
 
+	@SuppressWarnings("deprecation")
 	private static String getHisrotyUrl(String date, int count) {
 
 		String params = "";

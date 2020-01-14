@@ -32,7 +32,7 @@ public class VolumeTrends {
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
-	private static int NO_VALUES = 20;
+	private static int NO_VALUES = 10;
 
 	private static List<String> SORT_KEY;
 
@@ -57,6 +57,8 @@ public class VolumeTrends {
 	public static void main(String[] args) {
 
 		final List<Symbol> symbolList = new ArrayList<>();
+		
+		resetArguments();
 
 		Map<String, List<String>> params = Utils.parseArguments(args);
 
@@ -74,7 +76,7 @@ public class VolumeTrends {
 				System.out.println("***   Invalid COUNT value. Proceeding with default value 2   ***");
 			}
 		}
-		
+
 		if (params.containsKey("days")) {
 
 			try {
@@ -115,7 +117,7 @@ public class VolumeTrends {
 
 			SMAR = params.get("smar").get(0);
 		}
-		
+
 		if (params.containsKey("db")) {
 
 			try {
@@ -202,7 +204,7 @@ public class VolumeTrends {
 		for (int i = 0; i < symbolList.size(); i++) {
 
 			Symbol symbol = symbolList.get(i);
-			
+
 			try {
 
 				VolumeTrend trendDetail = getTrendDetails(symbol.getName());
@@ -221,7 +223,7 @@ public class VolumeTrends {
 					if (filter) {
 
 						processedTrendList.add(trendDetail);
-						
+
 						Utils.addToVolDups(symbol.getName());
 					}
 
@@ -241,7 +243,7 @@ public class VolumeTrends {
 		processing = false;
 
 		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", "PRICE", "HIGH10/20", "$PRICAGE", "%PRICAGE",
-				"$LOHIDIF", "TENDCHG", "%TENDCHG", "SUPT", "REST", "$SRDIF", "%SUPT", "%REST", "SURE", "NEWHIGH",
+				"$LOHIDIF", "TENDCHG", "%TENDCHG", "SUPT", "REST", "$SRDIF", "%SUPT", "%REST", "SURE", "NEWLOHI",
 				"%LOW10", "%HIGH10", "VOLUME", "%VOLCAGE", "VolR", "PriR", "DayR", "TICKER" };
 
 		List<String[]> tmp = new ArrayList<>();
@@ -284,13 +286,13 @@ public class VolumeTrends {
 
 			data[i] = tmp.get(i);
 		}
-		
-		for(int i = 0; i < headers.length; i++) {
-			
+
+		for (int i = 0; i < headers.length; i++) {
+
 			headers[i] = headers[i].replaceAll("TEN", Utils.numberToWord(NO_VALUES));
-			
-			if(i == 14 || i == 15) {
-				
+
+			if (i == 14 || i == 15) {
+
 				headers[i] = headers[i].replaceAll("10", String.valueOf(NO_VALUES));
 			}
 		}
@@ -298,9 +300,9 @@ public class VolumeTrends {
 		System.out.println(FlipTableConverters.fromObjects(headers, data));
 
 		writeTrendsToFile(headers, processedTrendList);
-		
-		if(Unifier.SAVE_TO_DATABASE) {
-			
+
+		if (Unifier.SAVE_TO_DATABASE) {
+
 			DatabaseUtils.saveVolumeTrend(processedTrendList);
 		}
 	}
@@ -638,7 +640,7 @@ public class VolumeTrends {
 	private static void writeTrendsToFile(String[] headers, List<VolumeTrend> stocks) {
 
 		try {
-			
+
 			String filenamePrefix = "voltrend_" + NO_VALUES + "DAY_" + TREND_COUNT + "_" + TREND.toUpperCase();
 
 			File file = Utils.generateOutputFile(filenamePrefix, Utils.generateOutputDir());
@@ -674,7 +676,7 @@ public class VolumeTrends {
 					writer.println(tmp.replaceAll("_", ","));
 				}
 			}
-			
+
 			Utils.printVolRPriRLegend(writer);
 
 			writer.close();
@@ -683,6 +685,23 @@ public class VolumeTrends {
 
 			e.printStackTrace();
 		}
+	}
+
+	private static void resetArguments() {
+
+		NO_VALUES = 10;
+
+		SORT_KEY = null;
+
+		TREND = null;
+
+		SMAR = null;
+
+		TREND_COUNT = 2;
+
+		SURE = 10;
+
+		VOLUME_DIFF = 0;
 	}
 
 	private static void showProgress() {

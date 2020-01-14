@@ -16,6 +16,7 @@ import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
+import in.blacklotus.model.Opening;
 import in.blacklotus.model.PriceTrend;
 import in.blacklotus.model.PriceTrendData;
 import in.blacklotus.model.Stock;
@@ -76,6 +77,12 @@ public class DatabaseUtils {
 
 			Stock stock = stocksList.get(i);
 
+			BasicDBObject query = new BasicDBObject();
+
+			query.put("Symbol", stock.getSymbol());
+
+			query.put("FetchDate", dateSdf.format(new Date()));
+
 			BasicDBObject document = new BasicDBObject();
 
 			document.put("FetchDate", dateSdf.format(new Date()));
@@ -91,6 +98,8 @@ public class DatabaseUtils {
 			document.put("Low10Date", stock.getLow10Date());
 
 			document.put("Price", Utils.round(stock.getNow()));
+			
+			document.put("Volume", Utils.formattedVolume(stock.getVolume()));
 
 			document.put("High10", Utils.round(stock.getHigh10()));
 
@@ -113,6 +122,8 @@ public class DatabaseUtils {
 			document.put("PercentREST", Utils.round(stock.getRestPercent()));
 
 			document.put("SURE", stock.getSmar());
+			
+			document.put("NEWLOHI", stock.getNewHigh());
 
 			document.put("PercentLow10", Utils.round(stock.getLow10Percent()));
 
@@ -130,7 +141,7 @@ public class DatabaseUtils {
 
 			document.put("VolumeRank", stock.volumeRank());
 
-			table.insert(document);
+			table.update(query, document, true, false);
 		}
 	}
 
@@ -187,6 +198,12 @@ public class DatabaseUtils {
 				}
 			}
 
+			BasicDBObject query = new BasicDBObject();
+
+			query.put("Symbol", stock.getSymbol());
+
+			query.put("FetchDate", dateSdf.format(new Date()));
+
 			BasicDBObject document = new BasicDBObject();
 
 			document.put("FetchDate", dateSdf.format(new Date()));
@@ -227,6 +244,8 @@ public class DatabaseUtils {
 			document.put("PercentREST", round(stock.getRestPercent()));
 
 			document.put("SURE", stock.getSmar());
+			
+			document.put("NEWLOHI", stock.getNewHigh());
 
 			document.put("PercentLow10", round(stock.getLow10Percent()));
 
@@ -248,7 +267,7 @@ public class DatabaseUtils {
 
 			document.put("DayRank", trends.get(0).getDayRank());
 
-			table.insert(document);
+			table.update(query, document, true, false);
 		}
 	}
 
@@ -262,9 +281,9 @@ public class DatabaseUtils {
 		}
 
 		DBCollection table = db.getCollection("voltrend");
-		
+
 		SimpleDateFormat dateSdf = new SimpleDateFormat("MMMM dd yyyy");
-		
+
 		SimpleDateFormat timeSdf = new SimpleDateFormat("hh:mm aaa");
 
 		for (int i = 0; i < stocksList.size(); i++) {
@@ -304,6 +323,12 @@ public class DatabaseUtils {
 					volcagepercents[j] = round(trendData.getVolumeDiffPercentage());
 				}
 			}
+
+			BasicDBObject query = new BasicDBObject();
+
+			query.put("Symbol", stock.getSymbol());
+
+			query.put("FetchDate", dateSdf.format(new Date()));
 
 			BasicDBObject document = new BasicDBObject();
 
@@ -345,6 +370,8 @@ public class DatabaseUtils {
 			document.put("PercentREST", round(stock.getRestPercent()));
 
 			document.put("SURE", stock.getSmar());
+			
+			document.put("NEWLOHI", stock.getNewHigh());
 
 			document.put("PercentLow10", round(stock.getLow10Percent()));
 
@@ -364,7 +391,7 @@ public class DatabaseUtils {
 
 			document.put("VolumeRank", trends.get(0).getVolumeRank());
 
-			table.insert(document);
+			table.update(query, document, true, false);
 		}
 	}
 
@@ -384,9 +411,9 @@ public class DatabaseUtils {
 		SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd yyyy");
 
 		Calendar c = Calendar.getInstance();
-		
+
 		c.add(Calendar.DAY_OF_MONTH, -1);
-		
+
 		BasicDBObject query = new BasicDBObject("FetchDate", sdf.format(c.getTime()));
 
 		DBCursor results = table.find(query);
@@ -402,79 +429,83 @@ public class DatabaseUtils {
 
 	}
 
-	public static void saveOpeningValue(List<Stock> stocksList) {
+	public static void saveOpeningValue(List<Opening> stocksList, boolean save, String type, Date date) {
+
+		String[] headers = new String[] { "SNO", "SYMBOL", "OPEN", "CLOSE", "LOW", "HIGH", "GAINCLOSE", "%GAINCLOSE", "GAINHIGH", "%GAINHIGH", "%VOLCAGE2" };
+
+		String[][] data = new String[stocksList.size()][];
 
 		DB db = getInstance().getDB(DATABASE_NAME);
 
-		if (!isDatabaseConnected) {
+		if (!isDatabaseConnected || !save) {
 
 			System.out.println("Unable to connect Database");
+
+			for (int i = 0; i < stocksList.size(); i++) {
+
+				Opening stock = stocksList.get(i);
+				
+				data[i] = new String[] { String.valueOf(i + 1), stock.getSymbol(),
+						String.format("%.2f", stock.getOpen()), String.format("%.2f", stock.getNow()),
+						String.format("%.2f", stock.getLow20()), String.format("%.2f", stock.getHigh20()),
+						String.format("%.2f", stock.getGainClose()), String.format("%.2f%%", stock.getGainClosePercent()),
+						String.format("%.2f", stock.getGainHigh()), String.format("%.2f%%", stock.getGainHighPercent()),
+						String.format("%.2f%%", stock.getVolumeChangePercent2())};
+			}
+
+			System.out.println(FlipTableConverters.fromObjects(headers, data));
 
 			return;
 		}
 
 		SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd yyyy");
 
-		DBCollection table = db.getCollection("openings");
+		DBCollection table = db.getCollection(type);
 
-		BasicDBObject query = new BasicDBObject("FetchDate", sdf.format(new Date()));
+		for (int i = 0; i < stocksList.size(); i++) {
 
-		DBCursor results = table.find(query);
-
-		String[] headers = new String[] { "SNO", "SYMBOL", "OPEN", "CLOSE" };
-
-		String[][] data = new String[stocksList.size()][];
-
-		if (results.count() == 0) {
-
-			for (int i = 0; i < stocksList.size(); i++) {
-
-				Stock stock = stocksList.get(i);
-
-				BasicDBObject document = new BasicDBObject();
-
-				document.put("FetchDate", sdf.format(new Date()));
-
-				document.put("SNO", (i + 1));
-
-				document.put("Symbol", stock.getSymbol());
-
-				document.put("open", Utils.round(stock.getOpen()));
-				
-				document.put("close", Utils.round(stock.getNow()));
-
-				table.insert(document);
-
-				data[i] = new String[] { String.valueOf(i + 1), stock.getSymbol(),
-						String.format("%.2f", stock.getOpen()), String.format("%.2f", stock.getNow()) };
-			}
-
-			System.out.println(FlipTableConverters.fromObjects(headers, data));
-
-		} else {
-
-//			System.out.println("--------------------------------------------------");
-//
-//			System.out.println("Already fetched for today");
-//
-//			System.out.println("--------------------------------------------------");
-
-			for (int i = 0; i < stocksList.size(); i++) {
-
-				Stock stock = stocksList.get(i);
-
-				data[i] = new String[] { String.valueOf(i + 1), stock.getSymbol(),
-						String.format("%.2f", stock.getOpen()), String.format("%.2f", stock.getNow()) };
-			}
-
-			System.out.println(FlipTableConverters.fromObjects(headers, data));
+			Opening stock = stocksList.get(i);
 			
-//			System.out.println("--------------------------------------------------");
-//
-//			System.out.println("Already fetched for today");
-//
-//			System.out.println("--------------------------------------------------");
+			BasicDBObject query = new BasicDBObject("FetchDate", sdf.format(date));
+			
+			query.put("Symbol", stock.getSymbol());
+
+			BasicDBObject document = new BasicDBObject();
+
+			document.put("Open", Utils.round(stock.getOpen()));
+
+			document.put("Close", Utils.round(stock.getNow()));
+
+			document.put("Low", Utils.round(stock.getLow20()));
+
+			document.put("High", Utils.round(stock.getHigh20()));
+			
+			document.put("GainClose", Utils.round(stock.getGainClose()));
+			
+			document.put("%GainClose", Utils.round(stock.getGainClosePercent()));
+			
+			document.put("GainHigh", Utils.round(stock.getGainHigh()));
+			
+			document.put("%GainHigh", Utils.round(stock.getGainHighPercent()));
+			
+			document.put("%VOLCAGE2", Utils.round(stock.getVolumeChangePercent2()));
+			
+			BasicDBObject setQuery = new BasicDBObject();
+			
+		    setQuery.append("$set", document);
+
+			table.update(query, setQuery, true, false);
+
+			data[i] = new String[] { String.valueOf(i + 1), stock.getSymbol(), String.format("%.2f", stock.getOpen()),
+					String.format("%.2f", stock.getNow()), String.format("%.2f", stock.getLow20()),
+					String.format("%.2f", stock.getHigh20()), String.format("%.2f", stock.getGainClose()), 
+					String.format("%.2f%%", stock.getGainClosePercent()), String.format("%.2f", stock.getGainHigh()), 
+					String.format("%.2f%%", stock.getGainHighPercent()), String.format("%.2f%%", stock.getVolumeChangePercent2()) };
 		}
+
+		System.out.println("Writing in to table");
+
+		System.out.println(FlipTableConverters.fromObjects(headers, data));
 	}
 
 	private static double round(double value) {

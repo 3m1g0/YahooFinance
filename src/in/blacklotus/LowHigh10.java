@@ -68,7 +68,7 @@ public class LowHigh10 {
 	private static final String[] SORT_KEYS = { "PRICE", "LOW10", "HIGH10", "%LOW10", "%HIGH10", "%TODAY", "%LOHIDIF",
 			"PriR", "VolR", "SMAR" };
 
-	private static String HEADER = "SNO,SYMBOL,LOW10,PRICE,HIGH10,$PRICAGE,%NOW,$LOHIDIF,TENDCHG,%TENDCHG,SUPT,REST,$SRDIF,%SUPT,%REST,SURE,NEWHIGH,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,VolR,PriR,TICKER";
+	private static String HEADER = "SNO,SYMBOL,LOW10,PRICE,VOL,HIGH10,$PRICAGE,%NOW,$LOHIDIF,TENDCHG,%TENDCHG,SUPT,REST,$SRDIF,%SUPT,%REST,SURE,NEWLOHI,%LOW10,%HIGH10,%LOHIDIF,%VOLCAGE,VolR,PriR,TICKER";
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
@@ -719,8 +719,12 @@ public class LowHigh10 {
 			stock.setNowDate(new Date(timestamps[timestamps.length - 1] * 1000L));
 
 			stock.setHigh10Date(new Date(timestamps[highIndex] * 1000L));
+			
+			stock.setHigh20Date(new Date(timestamps[highIndex] * 1000L));
 
 			stock.setLow10Date(new Date(timestamps[lowIndex] * 1000L));
+			
+			stock.setLow20Date(new Date(timestamps[lowIndex] * 1000L));
 
 		} catch (IOException e) {
 
@@ -1501,10 +1505,41 @@ public class LowHigh10 {
 			return 60 * repeat * 1000;
 		}
 	}
+	
+	private static void resetArguments() {
+		
+		NO_VALUES = 10;
+
+		SORT_KEY = null;
+
+		FILTER = null;
+
+		REPEAT = null;
+
+		TREND = null;
+
+		TREND_COUNT = 3;
+
+		SMAR = null;
+
+		SURE = 10;
+
+		DROP = Integer.MIN_VALUE;
+
+		LTEN = null;
+
+		LOHIDIF = null;
+
+		CENT = Integer.MAX_VALUE;
+
+		repeat = -1;
+	}
 
 	private static void parseArguments(String args[]) {
 		
 		params.clear();
+		
+		resetArguments();
 
 		List<String> options = null;
 

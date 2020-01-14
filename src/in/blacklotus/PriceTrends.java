@@ -32,7 +32,7 @@ public class PriceTrends {
 
 	private static final String INPUT_FILE_NAME = "input.csv";
 
-	private static int NO_VALUES = 20;
+	private static int NO_VALUES = 10;
 
 	private static List<String> SORT_KEY;
 
@@ -55,6 +55,8 @@ public class PriceTrends {
 	public static void main(String[] args) {
 
 		final List<Symbol> symbolList = new ArrayList<>();
+		
+		resetArguments();
 
 		Map<String, List<String>> params = Utils.parseArguments(args);
 
@@ -72,7 +74,7 @@ public class PriceTrends {
 				System.out.println("***   Invalid COUNT value. Proceeding with default value 2   ***");
 			}
 		}
-		
+
 		if (params.containsKey("days")) {
 
 			try {
@@ -228,7 +230,7 @@ public class PriceTrends {
 
 		String[] headers = new String[] { "SNO", "SYMBOL", "LOW10/20", TREND.toUpperCase() + "TREND", "HIGH10/20",
 				"$PRICAGE", "%PRICAGE", "$LOHIDIF", "TENDCHG", "%TENDCHG", "SUPT", "REST", "$SRDIF", "%SUPT", "%REST",
-				"SURE", "NEWHIGH", "%LOW10", "%HIGH10", "VOLUME", "%VOLCAGE", "VolR", "PriR", "DayR", "TICKER" };
+				"SURE", "NEWLOHI", "%LOW10", "%HIGH10", "VOLUME", "%VOLCAGE", "VolR", "PriR", "DayR", "TICKER" };
 
 		List<String[]> tmp = new ArrayList<>();
 
@@ -635,7 +637,7 @@ public class PriceTrends {
 	private static void writeTrendsToFile(String[] headers, List<PriceTrend> stocks) {
 
 		try {
-			
+
 			String filenamePrefix = "pricetrend_" + NO_VALUES + "DAY_" + TREND_COUNT + "_" + TREND.toUpperCase();
 
 			File file = Utils.generateOutputFile(filenamePrefix, Utils.generateOutputDir());
@@ -671,7 +673,7 @@ public class PriceTrends {
 					writer.println(tmp.replaceAll("_", ","));
 				}
 			}
-			
+
 			Utils.printVolRPriRLegend(writer);
 
 			writer.close();
@@ -680,6 +682,21 @@ public class PriceTrends {
 
 			e.printStackTrace();
 		}
+	}
+
+	private static void resetArguments() {
+
+		NO_VALUES = 10;
+
+		SORT_KEY = null;
+
+		TREND = null;
+
+		SMAR = null;
+
+		TREND_COUNT = 2;
+
+		SURE = 10;
 	}
 
 	private static void showProgress() {

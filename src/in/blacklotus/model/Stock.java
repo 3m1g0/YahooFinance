@@ -1,7 +1,10 @@
 package in.blacklotus.model;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+
+import in.blacklotus.utils.Utils;
 
 public class Stock {
 
@@ -467,15 +470,25 @@ public class Stock {
 	}
 
 	public String getNewHigh() {
-		if (this.getNow() == this.getHigh20()) {
+		if (isToday(this.getHigh20Date())) {
 			return "HIGH";
-		} else if (this.getNow() == this.getLow20()) {
+		} else if (isToday(this.getLow20Date())) {
 			return "LOW";
 		} else {
 			return "NONE";
 		}
 	}
-
+	
+	private boolean isToday(Date date) {
+		Calendar today = Calendar.getInstance();
+		Calendar compare = Calendar.getInstance();
+		compare.setTime(date);
+		
+		return today.get(Calendar.YEAR) == compare.get(Calendar.YEAR)
+				&& today.get(Calendar.MONTH) == compare.get(Calendar.MONTH)
+				&& today.get(Calendar.DAY_OF_MONTH) == compare.get(Calendar.DAY_OF_MONTH);
+	}
+	
 	protected String getPrintableData(double value) {
 
 		if (value == -9999) {
@@ -810,20 +823,18 @@ public class Stock {
 
 		if (name == null) {
 
-			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
+			return String.format("%d,%s,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-", index, symbol);
 		}
 
 		return String.format(
-				"%d,%s,%s,%s,%s,%s,%s,%s,T: %s,T: %s,S: %s,R: %s,%s,S: %s%%,R: %s%%,%s,%s,L: %s,H: %s,%s,V: %s,V: %s,P: %s,%s",
-				index, this.symbol, toPrintableLow(0), round(this.now), toPrintableHigh(0),
-				getPrintableDataValue(round(this.pricage)), getPrintableData(round(this.nowPercent)),
-				round(this.lowHighDiff), getPrintableDataValue(round(this.dchg10)),
-				getPrintableData(round(this.dchgPercent)), round(getSupt()), round(getRest()), round(getSrdif()),
-				round(getSuptPercent()), round(getRestPercent()), getSmar(), this.getNewHigh(),
-				getPrintableData(round(this.low10Percent)), getPrintableData(round(this.high10Percent)),
+				"%d,%s,%s,%s,%s,%s,%s,%s,%s,T: %s,T: %s,S: %s,R: %s,%s,S: %s%%,R: %s%%,%s,%s,L: %s,H: %s,%s,V: %s,V: %s,P: %s,%s",
+				index, this.symbol, toPrintableLow(0), round(this.now), Utils.formattedVolume(this.volume), 
+				toPrintableHigh(0), getPrintableDataValue(round(this.pricage)), getPrintableData(round(this.nowPercent)),
+				round(this.lowHighDiff), getPrintableDataValue(round(this.dchg10)), getPrintableData(round(this.dchgPercent)), 
+				round(getSupt()), round(getRest()), round(getSrdif()), round(getSuptPercent()), round(getRestPercent()), getSmar(),
+				this.getNewHigh(), getPrintableData(round(this.low10Percent)), getPrintableData(round(this.high10Percent)),
 				getPrintableData(round(this.lowHighDiffPercent)), getPrintableData(round(this.volumeChangePercent)),
 				volumeRank(), priceRank(), this.symbol);
-
 	}
 
 	public String toPrintableLow(int index) {
@@ -838,12 +849,13 @@ public class Stock {
 
 	@Override
 	public String toString() {
-
-		return String.format("%s,%.2f,%.2f,%.2f,%.2f,%d,%.2f,%.2f,%s,%s,%.2f,%.2f,%.2f", this.symbol, round(this.now),
-				round(this.low20), round(this.high20), round(this.nowPercent), round(this.lowHighDiff),
-				round(this.low10Percent), round(this.high10Percent), sdf.format(this.low20Date),
-				sdf.format(this.high20Date), round(this.lowHighDiffPercent), round(this.volumeChangePercent),
-				volumeRank(), priceRank());
+		return "Stock [name=" + name + ", symbol=" + symbol + ", now=" + now + ", open=" + open + ", volume=" + volume
+				+ ", low10=" + low10 + ", low20=" + low20 + ", high10=" + high10 + ", high20=" + high20
+				+ ", high20Index=" + high20Index + ", volumeChangePercent=" + volumeChangePercent + ", lowHighDiff="
+				+ lowHighDiff + ", lowHighDiffPercent=" + lowHighDiffPercent + ", sma10=" + sma10 + ", supt=" + supt
+				+ ", rest=" + rest + ", smar=" + smar + ", suptPercent=" + suptPercent + ", restPercent=" + restPercent
+				+ ", srdif=" + srdif + ", dchg10=" + dchg10 + ", dchgPercent=" + dchgPercent + ", prir=" + prir
+				+ ", volr=" + volr + ", sdf=" + sdf + "]";
 	}
 
 }

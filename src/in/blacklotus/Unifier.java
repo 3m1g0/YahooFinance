@@ -119,6 +119,8 @@ public class Unifier {
 					try {
 						
 						Command command = new Command(split[0], split.length == 0 ? new String[] {} : Arrays.copyOfRange(split, 1, split.length));
+						
+						System.out.println(command.printRawCommand());
 
 						commandsList.add(command);
 
